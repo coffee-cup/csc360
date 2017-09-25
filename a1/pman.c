@@ -1,14 +1,44 @@
+#include "processes.h"
 #include "utils.h"
+#include <errno.h>
 #include <readline/history.h>
 #include <readline/readline.h>
+#include <signal.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 #include <unistd.h>
+
+Process *background_task(Process *head, char *args[]) {
+  printf("Start to create a child process...\n");
+
+  // TODO: Wait on zombie processes here
+  pid_t pid = fork();
+  if (pid >= 0) {
+    if (pid == 0) {
+      // Child process
+      if (execvp(args[0], args) < 0) {
+        perror("Error on execvp");
+      }
+
+      exit(EXIT_FAILURE);
+    } else {
+      // Parent process
+      printf("\nParent has created a new child with pid %d\n", pid);
+    }
+  } else {
+    perror("fork\n"); /* display error message */
+    exit(EXIT_FAILURE);
+  }
+}
 
 int main() {
   char *input = NULL;
   char *prompt = "PMan: >";
   int status;
+
+  Process *head = NULL;
 
   char cont = 'y'; // y - continue
 
@@ -33,6 +63,7 @@ int main() {
 
     if (command_compare("bg", command)) {
       printf("Background Task\n");
+      background_task(head, args);
     } else if (command_compare("bglist", command)) {
       printf("List\n");
     } else if (command_compare("bgkill", command)) {
