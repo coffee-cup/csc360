@@ -64,3 +64,23 @@ void list_processes(Process *head) {
   }
   printf("Total background jobs: %d\n", count);
 }
+
+Process *remove_zombies(Process *head) {
+  Process *curr = head;
+  int status;
+
+  while (curr != NULL) {
+    int opts = WNOHANG;
+    int retVal;
+
+    retVal = waitpid(curr->pid, &status, opts);
+    if (retVal == curr->pid) {
+      // We need to remove this process
+      head = delete_process(head, curr->pid);
+      curr = head;
+    } else {
+      curr = curr->next;
+    }
+  }
+  return head;
+}

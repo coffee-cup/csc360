@@ -17,7 +17,7 @@ Process *background_task(Process *head, char *args[]) {
     if (pid == 0) {
       // Child process
       if (execvp(args[0], args) < 0) {
-        perror("Error on execvp");
+        perror("Error on execvp\n");
       }
 
       exit(EXIT_FAILURE);
@@ -53,12 +53,14 @@ int main() {
 
     // printf("command: %s\n", command);
     // printf("args: ");
-    int j = 0;
-    while (args[j] != NULL) {
-      printf("%s ", args[j]);
-      j += 1;
-    }
-    printf("\n");
+    // int j = 0;
+    // while (args[j] != NULL) {
+    //   printf("%s ", args[j]);
+    //   j += 1;
+    // }
+    // printf("\n");
+
+    head = remove_zombies(head);
 
     if (command_compare("bg", command)) {
       head = background_task(head, args);

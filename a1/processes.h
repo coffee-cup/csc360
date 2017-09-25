@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 
 typedef struct _Process Process;
 
@@ -24,5 +25,9 @@ void list_processes(Process *head);
 
 // Returns the number of processes in the chain
 int count_processes(Process *head);
+
+// Removes zombie processes from the chain
+// Returns the new chain
+Process *remove_zombies(Process *head);
 
 #endif
