@@ -42,3 +42,25 @@ Process *delete_process(Process *head, pid_t pid) {
   free(curr);
   return head;
 }
+
+int count_processes(Process *head) {
+  int count = 0;
+  Process *curr = head;
+  while (curr != NULL) {
+    count += 1;
+    curr = curr->next;
+  }
+  return count;
+}
+
+void list_processes(Process *head) {
+  Process *curr = head;
+  int count = 0;
+  while (curr != NULL) {
+    printf("%d:\t%s\n", curr->pid, curr->command);
+
+    count += 1;
+    curr = curr->next;
+  }
+  printf("Total background jobs: %d\n", count);
+}

@@ -11,8 +11,6 @@
 #include <unistd.h>
 
 Process *background_task(Process *head, char *args[]) {
-  printf("Start to create a child process...\n");
-
   // TODO: Wait on zombie processes here
   pid_t pid = fork();
   if (pid >= 0) {
@@ -25,7 +23,8 @@ Process *background_task(Process *head, char *args[]) {
       exit(EXIT_FAILURE);
     } else {
       // Parent process
-      printf("\nParent has created a new child with pid %d\n", pid);
+      printf("Created a new child process with pid %d\n", pid);
+      return create_process(head, pid, args[0]);
     }
   } else {
     perror("fork\n"); /* display error message */
@@ -52,8 +51,8 @@ int main() {
 
     parse_input(input, &command, &args);
 
-    printf("command: %s\n", command);
-    printf("args: ");
+    // printf("command: %s\n", command);
+    // printf("args: ");
     int j = 0;
     while (args[j] != NULL) {
       printf("%s ", args[j]);
@@ -62,10 +61,9 @@ int main() {
     printf("\n");
 
     if (command_compare("bg", command)) {
-      printf("Background Task\n");
-      background_task(head, args);
+      head = background_task(head, args);
     } else if (command_compare("bglist", command)) {
-      printf("List\n");
+      list_processes(head);
     } else if (command_compare("bgkill", command)) {
       printf("Kill\n");
     } else if (command_compare("bgstop", command)) {

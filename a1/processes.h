@@ -19,4 +19,10 @@ Process *get_process(Process *head, pid_t pid);
 // Returns new head
 Process *delete_process(Process *head, pid_t pid);
 
+// Prints out a list of the processes
+void list_processes(Process *head);
+
+// Returns the number of processes in the chain
+int count_processes(Process *head);
+
 #endif
