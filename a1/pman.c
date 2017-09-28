@@ -17,7 +17,8 @@ Process *background_task(Process *head, char *args[]) {
     if (pid == 0) {
       // Child process
       if (execvp(args[0], args) < 0) {
-        perror("Error on execvp\n");
+        perror("Error on execvp");
+        printf("\n");
       }
 
       exit(EXIT_FAILURE);
@@ -73,9 +74,15 @@ int main() {
         head = kill_process(head, pid);
       }
     } else if (command_compare("bgstop", command)) {
-      printf("Stop\n");
+      if (check_args(num_args, 1) == 0) {
+        pid_t pid = atoi(args[0]);
+        stop_process(head, pid);
+      }
     } else if (command_compare("bgstart", command)) {
-      printf("Start\n");
+      if (check_args(num_args, 1) == 0) {
+        pid_t pid = atoi(args[0]);
+        start_process(head, pid);
+      }
     } else if (command_compare("pstat", command)) {
       printf("Stats\n");
     } else {

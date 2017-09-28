@@ -25,6 +25,12 @@ Process *delete_process(Process *head, pid_t pid);
 // Returns new head
 Process *kill_process(Process *head, pid_t pid);
 
+// Stop a process in the chain
+void *stop_process(Process *head, pid_t pid);
+
+// Resume a stopped process in the chain
+void *start_process(Process *head, pid_t pid);
+
 // Prints out a list of the processes
 void list_processes(Process *head);
 

@@ -45,15 +45,40 @@ Process *delete_process(Process *head, pid_t pid) {
 
 Process *kill_process(Process *head, pid_t pid) {
   if (get_process(head, pid) == NULL) {
-    printf("Process %d does not exist\n", pid);
+    printf("Process %d does not exist.\n", pid);
     return head;
   }
 
   if (kill(pid, SIGTERM) == 0) {
     return delete_process(head, pid);
   } else {
-    perror("Error killing process\n");
+    perror("Error killing process");
+    printf("\n");
     return head;
+  }
+}
+
+void *stop_process(Process *head, pid_t pid) {
+  if (get_process(head, pid) == NULL) {
+    printf("Process %d does not exist.\n", pid);
+    return head;
+  }
+
+  if (kill(pid, SIGSTOP) != 0) {
+    perror("Error stopping process\n");
+    printf("\n");
+  }
+}
+
+void *start_process(Process *head, pid_t pid) {
+  if (get_process(head, pid) == NULL) {
+    printf("Process %d does not exist.\n", pid);
+    return head;
+  }
+
+  if (kill(pid, SIGCONT) != 0) {
+    perror("Error starting process");
+    printf("\n");
   }
 }
 
@@ -90,6 +115,7 @@ Process *remove_zombies(Process *head) {
     retVal = waitpid(curr->pid, &status, opts);
     if (retVal == curr->pid) {
       // We need to remove this process
+      printf("Process %d has terminated\n", curr->pid);
       head = delete_process(head, curr->pid);
       curr = head;
     } else {
