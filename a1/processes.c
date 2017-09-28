@@ -17,7 +17,7 @@ Process *create_process(Process *head, pid_t pid, char *command) {
 
 Process *get_process(Process *head, pid_t pid) {
   Process *curr = head;
-  while (curr->pid != pid && curr != NULL) {
+  while (curr != NULL && curr->pid != pid) {
     curr = curr->next;
   }
   return curr;
@@ -41,6 +41,20 @@ Process *delete_process(Process *head, pid_t pid) {
 
   free(curr);
   return head;
+}
+
+Process *kill_process(Process *head, pid_t pid) {
+  if (get_process(head, pid) == NULL) {
+    printf("Error killing process\n");
+    return head;
+  }
+
+  if (kill(pid, SIGTERM) == 0) {
+    return delete_process(head, pid);
+  } else {
+    perror("Error killing process\n");
+    return head;
+  }
 }
 
 int count_processes(Process *head) {

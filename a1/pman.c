@@ -43,13 +43,14 @@ int main() {
 
   char *command;
   char **args;
+  int num_args;
 
   while (1) {
     input = readline(prompt);
     if (strcasecmp(input, "") == 0)
       continue;
 
-    parse_input(input, &command, &args);
+    parse_input(input, &command, &args, &num_args);
 
     // printf("command: %s\n", command);
     // printf("args: ");
@@ -67,7 +68,10 @@ int main() {
     } else if (command_compare("bglist", command)) {
       list_processes(head);
     } else if (command_compare("bgkill", command)) {
-      printf("Kill\n");
+      if (check_args(num_args, 1) == 0) {
+        pid_t pid = atoi(args[0]);
+        head = kill_process(head, pid);
+      }
     } else if (command_compare("bgstop", command)) {
       printf("Stop\n");
     } else if (command_compare("bgstart", command)) {

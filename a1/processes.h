@@ -1,6 +1,7 @@
 #ifndef PROCESSES
 #define PROCESSES
 
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -19,6 +20,10 @@ Process *get_process(Process *head, pid_t pid);
 // Delete a process with specific pid from the chain
 // Returns new head
 Process *delete_process(Process *head, pid_t pid);
+
+// Kill a process and remove it from the chain
+// Returns new head
+Process *kill_process(Process *head, pid_t pid);
 
 // Prints out a list of the processes
 void list_processes(Process *head);
