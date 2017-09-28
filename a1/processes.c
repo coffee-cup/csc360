@@ -34,7 +34,7 @@ Process *delete_process(Process *head, pid_t pid) {
   if (curr == head) { // deleting the head
     head = curr->next;
   } else if (curr->next == NULL) { // deleting from the end
-    prev->next == NULL;
+    prev->next = NULL;
   } else { // deleting from the middle
     prev->next = curr->next;
   }
@@ -45,7 +45,7 @@ Process *delete_process(Process *head, pid_t pid) {
 
 Process *kill_process(Process *head, pid_t pid) {
   if (get_process(head, pid) == NULL) {
-    printf("Error killing process\n");
+    printf("Process %d does not exist\n", pid);
     return head;
   }
 
