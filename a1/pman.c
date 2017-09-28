@@ -80,7 +80,7 @@ int main() {
       }
     } else if (command_compare("bgstart", command)) {
       if (check_args(num_args, 1) == 0) {
-        pid_t pid = atoi(args[0]);
+        pid_t = pid = atoi(args[0]);
         start_process(head, pid);
       }
     } else if (command_compare("pstat", command)) {

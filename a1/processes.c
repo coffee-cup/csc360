@@ -50,7 +50,8 @@ Process *kill_process(Process *head, pid_t pid) {
   }
 
   if (kill(pid, SIGTERM) == 0) {
-    return delete_process(head, pid);
+    usleep(1000); /* Wait for process to finish */
+    return remove_zombies(head);
   } else {
     perror("Error killing process");
     printf("\n");
