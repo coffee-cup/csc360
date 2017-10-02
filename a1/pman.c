@@ -28,7 +28,8 @@ Process *background_task(Process *head, char *args[]) {
       return create_process(head, pid, args[0]);
     }
   } else {
-    perror("fork\n"); /* display error message */
+    perror("fork"); /* display error message */
+    printf("\n");
     exit(EXIT_FAILURE);
   }
 }

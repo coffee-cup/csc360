@@ -60,7 +60,7 @@ Process *delete_process(Process *head, pid_t pid) {
 
 Process *kill_process(Process *head, pid_t pid) {
   if (get_process(head, pid) == NULL) {
-    printf("Process %d does not exist.\n", pid);
+    printf("Error: Process %d does not exist.\n", pid);
     return head;
   }
 
@@ -76,7 +76,7 @@ Process *kill_process(Process *head, pid_t pid) {
 
 void *stop_process(Process *head, pid_t pid) {
   if (get_process(head, pid) == NULL) {
-    printf("Process %d does not exist.\n", pid);
+    printf("Error: Process %d does not exist.\n", pid);
     return head;
   }
 
@@ -88,7 +88,7 @@ void *stop_process(Process *head, pid_t pid) {
 
 void *start_process(Process *head, pid_t pid) {
   if (get_process(head, pid) == NULL) {
-    printf("Process %d does not exist.\n", pid);
+    printf("Error: Process %d does not exist.\n", pid);
     return head;
   }
 
@@ -143,18 +143,26 @@ Process *remove_zombies(Process *head) {
 
 void print_process_status(Process *head, pid_t pid) {
   if (get_process(head, pid) == NULL) {
-    printf("Process %d does not exist.\n", pid);
+    printf("Error: Process %d does not exist.\n", pid);
     return;
   }
 
+  // Create structure to hold status information
+  Status *s = (Status *)malloc(sizeof(Status));
+
+  // Read from /proc/PID/stat
   char stat_filename[1000];
   sprintf(stat_filename, "/proc/%d/stat", pid);
   FILE *fstat = fopen(stat_filename, "r");
+  if (fstat == NULL) {
+    printf("Error: Failed to read from %s\n", stat_filename);
+    return;
+  }
 
-  Status *s = (Status *)malloc(sizeof(Status));
   int unused_d;
   unsigned int unused_u;
   unsigned long unused_lu;
+  char unused_s[100];
 
   fscanf(fstat, "%d %s %c %d %d %d %d %d %u %lu %lu %lu %lu %lu %lu %ld %ld "
                 "%ld %ld %ld %ld %ld %lu %ld",
@@ -183,13 +191,45 @@ void print_process_status(Process *head, pid_t pid) {
          &unused_lu, // (23) vsize
          &s->rss     // (24) rss
          );
+  fclose(fstat);
+
+  // Read from /proc/PID/status
+  char status_filename[1000];
+  sprintf(status_filename, "/proc/%d/status", pid);
+  FILE *fstatus = fopen(status_filename, "r");
+  if (fstatus == NULL) {
+    printf("Error: Failed to read from %s\n", status_filename);
+    return;
+  }
+
+  char *line = NULL;
+  size_t len = 0;
+  int i = 0;
+  while (getline(&line, &len, fstatus) != -1) {
+    i += 1;
+    if (i == 40) {
+      // read voluntary_ctxt_switches
+      sscanf(line, "%s %d", unused_s, &s->voluntary_ctxt_switches);
+    } else if (i == 41) {
+      // read nonvoluntary_ctxt_switches
+      sscanf(line, "%s %d", unused_s, &s->nonvoluntary_ctxt_switches);
+    }
+  }
+  fclose(fstatus);
 
   printf("\n");
-  printf("comm:  %s\n", s->comm);
-  printf("pid:   %d\n", s->pid);
-  printf("state: %c\n", s->state);
-  printf("utime: %.2f seconds\n", ((float)s->utime / sysconf(_SC_CLK_TCK)));
-  printf("stime: %.2f seconds\n", ((float)s->stime / sysconf(_SC_CLK_TCK)));
-  printf("rss:   %ld\n", s->rss);
+  printf("comm:                       %s\n", s->comm);
+  printf("pid:                        %d\n", s->pid);
+  printf("state:                      %c\n", s->state);
+  printf("utime:                      %.2f seconds\n",
+         ((float)s->utime / sysconf(_SC_CLK_TCK)));
+  printf("stime:                      %.2f seconds\n",
+         ((float)s->stime / sysconf(_SC_CLK_TCK)));
+  printf("rss:                        %ld\n", s->rss);
+  printf("voluntary_ctxt_switches:    %d\n", s->voluntary_ctxt_switches);
+  printf("nonvoluntary_ctxt_switches: %d\n", s->nonvoluntary_ctxt_switches);
   printf("\n");
+
+  // Free the memory
+  free(s);
 }
