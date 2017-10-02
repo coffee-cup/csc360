@@ -11,7 +11,6 @@
 #include <unistd.h>
 
 Process *background_task(Process *head, char *args[]) {
-  // TODO: Wait on zombie processes here
   pid_t pid = fork();
   if (pid >= 0) {
     if (pid == 0) {
@@ -39,9 +38,8 @@ int main() {
   char *prompt = "PMan: >";
   int status;
 
+  // The process linked list
   Process *head = NULL;
-
-  char cont = 'y'; // y - continue
 
   char *command;
   char **args;
@@ -54,11 +52,13 @@ int main() {
 
     parse_input(input, &command, &args, &num_args);
 
-    // Remove zombies processes from the chain
+    // Remove zombie processes from the chain
     head = remove_zombies(head);
 
     if (command_compare("bg", command)) {
-      head = background_task(head, args);
+      if (check_args(num_args, 1) == 0) {
+        head = background_task(head, args);
+      }
     } else if (command_compare("bglist", command)) {
       list_processes(head);
     } else if (command_compare("bgkill", command)) {

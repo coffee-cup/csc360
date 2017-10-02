@@ -40,7 +40,7 @@ int command_compare(char *c1, char *command) {
 }
 
 int check_args(int supplied, int required) {
-  if (supplied != required) {
+  if (supplied < required) {
     if (required == 1) {
       printf("%d argument required\n", required);
     } else {

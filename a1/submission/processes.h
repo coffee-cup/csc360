@@ -47,9 +47,4 @@ Process *remove_zombies(Process *head);
 // Print status information for a single process
 void print_process_status(Process *head, pid_t pid);
 
-// Read status information for all processes in the chain
-// Replaces current status info
-// Returns the new chain
-// Process *read_statues(Process *head);
-
 #endif

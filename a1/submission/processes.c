@@ -218,8 +218,8 @@ void print_process_status(Process *head, pid_t pid) {
   fclose(fstatus);
 
   printf("\n");
-  printf("comm:                       %s\n", s->comm);
   printf("pid:                        %d\n", s->pid);
+  printf("comm:                       %s\n", s->comm);
   printf("state:                      %c\n", s->state);
   printf("utime:                      %.2f seconds\n",
          ((float)s->utime / sysconf(_SC_CLK_TCK)));
@@ -232,4 +232,5 @@ void print_process_status(Process *head, pid_t pid) {
 
   // Free the memory
   free(s);
+  free(line);
 }
