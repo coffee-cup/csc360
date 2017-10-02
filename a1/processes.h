@@ -4,10 +4,13 @@
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/times.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <unistd.h>
 
 typedef struct _Process Process;
+typedef struct _Status Status;
 
 // Create new process and place at beginning of chain
 // Returns new head
@@ -40,5 +43,13 @@ int count_processes(Process *head);
 // Removes zombie processes from the chain
 // Returns the new chain
 Process *remove_zombies(Process *head);
+
+// Print status information for a single process
+void print_process_status(Process *head, pid_t pid);
+
+// Read status information for all processes in the chain
+// Replaces current status info
+// Returns the new chain
+// Process *read_statues(Process *head);
 
 #endif

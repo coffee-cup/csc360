@@ -1,9 +1,24 @@
 #include "processes.h"
 
 struct _Process {
-  pid_t pid;
-  char *command;
-  struct _Process *next;
+  pid_t pid;             /* The process ID */
+  char *command;         /* The command the process is running */
+  struct _Process *next; /* Pointer to next process in linked list */
+};
+
+struct _Status {
+  pid_t pid;           /* The process ID */
+  char comm[1000];     /* The filename of the executable */
+  char state;          /* One character from the string RSDZTW */
+  unsigned long utime; /* Amount of time that this process has been scheduled in
+                          user mode */
+  unsigned long
+      stime; /* Amount of time that this process has been scheduled in kernel
+                mode */
+  long int
+      rss; /* Resident Set Size: number of pages process has in real memory */
+  int voluntary_ctxt_switches;    /* Number of voluntary context switches */
+  int nonvoluntary_ctxt_switches; /* Number of involuntary context switches */
 };
 
 Process *create_process(Process *head, pid_t pid, char *command) {
@@ -124,4 +139,57 @@ Process *remove_zombies(Process *head) {
     }
   }
   return head;
+}
+
+void print_process_status(Process *head, pid_t pid) {
+  if (get_process(head, pid) == NULL) {
+    printf("Process %d does not exist.\n", pid);
+    return;
+  }
+
+  char stat_filename[1000];
+  sprintf(stat_filename, "/proc/%d/stat", pid);
+  FILE *fstat = fopen(stat_filename, "r");
+
+  Status *s = (Status *)malloc(sizeof(Status));
+  int unused_d;
+  unsigned int unused_u;
+  unsigned long unused_lu;
+
+  fscanf(fstat, "%d %s %c %d %d %d %d %d %u %lu %lu %lu %lu %lu %lu %ld %ld "
+                "%ld %ld %ld %ld %ld %lu %ld",
+         &s->pid,    // (1) pid
+         s->comm,    // (2) comm
+         &s->state,  // (3) state
+         &unused_d,  // (4) ppid
+         &unused_d,  // (5) pgrp
+         &unused_d,  // (6) session
+         &unused_d,  // (7) tty_nr
+         &unused_d,  // (8) tpgid
+         &unused_u,  // (9) flags
+         &unused_lu, // (10) minflt
+         &unused_lu, // (11) cminflt
+         &unused_lu, // (12) majflt
+         &unused_lu, // (13) cmajflt
+         &s->utime,  // (14) utime
+         &s->stime,  // (15) stime
+         &unused_lu, // (16) cutime
+         &unused_lu, // (17) cstime
+         &unused_lu, // (18) priority
+         &unused_lu, // (19) nice
+         &unused_lu, // (20) num_threads
+         &unused_lu, // (21) itrealvalue
+         &unused_lu, // (22) starttime
+         &unused_lu, // (23) vsize
+         &s->rss     // (24) rss
+         );
+
+  printf("\n");
+  printf("comm:  %s\n", s->comm);
+  printf("pid:   %d\n", s->pid);
+  printf("state: %c\n", s->state);
+  printf("utime: %.2f seconds\n", ((float)s->utime / sysconf(_SC_CLK_TCK)));
+  printf("stime: %.2f seconds\n", ((float)s->stime / sysconf(_SC_CLK_TCK)));
+  printf("rss:   %ld\n", s->rss);
+  printf("\n");
 }

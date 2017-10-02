@@ -53,15 +53,7 @@ int main() {
 
     parse_input(input, &command, &args, &num_args);
 
-    // printf("command: %s\n", command);
-    // printf("args: ");
-    // int j = 0;
-    // while (args[j] != NULL) {
-    //   printf("%s ", args[j]);
-    //   j += 1;
-    // }
-    // printf("\n");
-
+    // Remove zombies processes from the chain
     head = remove_zombies(head);
 
     if (command_compare("bg", command)) {
@@ -80,11 +72,14 @@ int main() {
       }
     } else if (command_compare("bgstart", command)) {
       if (check_args(num_args, 1) == 0) {
-        pid_t = pid = atoi(args[0]);
+        pid_t pid = atoi(args[0]);
         start_process(head, pid);
       }
     } else if (command_compare("pstat", command)) {
-      printf("Stats\n");
+      if (check_args(num_args, 1) == 0) {
+        pid_t pid = atoi(args[0]);
+        print_process_status(head, pid);
+      }
     } else {
       printf("%s:  command not found\n", command);
     }
