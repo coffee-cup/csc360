@@ -17,7 +17,7 @@ typedef struct _Status Status;
 Process *create_process(Process *head, pid_t pid, char *command);
 
 // Get a process with specific pid
-// Returns *Process
+// Returns a pointer to the Process
 Process *get_process(Process *head, pid_t pid);
 
 // Delete a process with specific pid from the chain

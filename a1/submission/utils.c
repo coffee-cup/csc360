@@ -1,7 +1,4 @@
 #include "utils.h"
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
 
 void parse_input(char *input, char **command, char **args[], int *num_args) {
   // Split input string on space

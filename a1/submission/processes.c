@@ -64,6 +64,7 @@ Process *kill_process(Process *head, pid_t pid) {
     return head;
   }
 
+  // Send TERM signal to process
   if (kill(pid, SIGTERM) == 0) {
     usleep(1000); /* Wait for process to finish */
     return remove_zombies(head);
@@ -80,6 +81,7 @@ void *stop_process(Process *head, pid_t pid) {
     return head;
   }
 
+  // Send STOP signal to process
   if (kill(pid, SIGSTOP) != 0) {
     perror("Error stopping process\n");
     printf("\n");
@@ -92,6 +94,7 @@ void *start_process(Process *head, pid_t pid) {
     return head;
   }
 
+  // Send CONT signal to process
   if (kill(pid, SIGCONT) != 0) {
     perror("Error starting process");
     printf("\n");
@@ -112,7 +115,7 @@ void list_processes(Process *head) {
   Process *curr = head;
   int count = 0;
   while (curr != NULL) {
-    printf("%d:\t%s\n", curr->pid, curr->command);
+    printf("%d: %s\n", curr->pid, curr->command);
 
     count += 1;
     curr = curr->next;
@@ -159,6 +162,7 @@ void print_process_status(Process *head, pid_t pid) {
     return;
   }
 
+  // For information we don't care about
   int unused_d;
   unsigned int unused_u;
   unsigned long unused_lu;
@@ -205,13 +209,16 @@ void print_process_status(Process *head, pid_t pid) {
   char *line = NULL;
   size_t len = 0;
   int i = 0;
+
+  // Read the lines from the file
+  // We only care about line 40 and 41
   while (getline(&line, &len, fstatus) != -1) {
     i += 1;
     if (i == 40) {
-      // read voluntary_ctxt_switches
+      // voluntary_ctxt_switches
       sscanf(line, "%s %d", unused_s, &s->voluntary_ctxt_switches);
     } else if (i == 41) {
-      // read nonvoluntary_ctxt_switches
+      // nonvoluntary_ctxt_switches
       sscanf(line, "%s %d", unused_s, &s->nonvoluntary_ctxt_switches);
     }
   }

@@ -10,6 +10,8 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+// Create a new process to background a task
+// The command to run is args[0]
 Process *background_task(Process *head, char *args[]) {
   pid_t pid = fork();
   if (pid >= 0) {
@@ -47,13 +49,15 @@ int main() {
 
   while (1) {
     input = readline(prompt);
-    if (strcasecmp(input, "") == 0)
-      continue;
-
-    parse_input(input, &command, &args, &num_args);
 
     // Remove zombie processes from the chain
     head = remove_zombies(head);
+
+    if (strcasecmp(input, "") == 0)
+      continue;
+
+    // Parse command and arguments from user input
+    parse_input(input, &command, &args, &num_args);
 
     if (command_compare("bg", command)) {
       if (check_args(num_args, 1) == 0) {
