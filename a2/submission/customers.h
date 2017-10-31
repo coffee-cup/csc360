@@ -11,6 +11,12 @@
 
 typedef struct _Customer Customer;
 
+struct _Customer {
+  int id;           /* The ID of the customer */
+  int arrival_time; /* Arrival time of the customer */
+  int service_time; /* Service time of the customer */
+};
+
 Customer *create_customer(int id, int arrival_time, int service_time);
 
 void print_customer(Customer *c);
