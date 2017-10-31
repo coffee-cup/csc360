@@ -10,6 +10,11 @@
 void *customer_thread(void *customer_pointer) {
   Customer *customer = (Customer *)customer_pointer;
   printf("Customer thread %d\n", customer->id);
+
+  usleep(customer->arrival_time * 100000);
+
+  printf("Customer %d has arrived\n", customer->id);
+
   return NULL;
 }
 
