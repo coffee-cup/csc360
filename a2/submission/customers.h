@@ -15,4 +15,8 @@ Customer *create_customer(int id, int arrival_time, int service_time);
 
 void print_customer(Customer *c);
 
+size_t customer_size();
+
+size_t customer_pointer_size();
+
 #endif
