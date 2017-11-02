@@ -16,6 +16,9 @@ void *enqueue(CustomerQueue *queue, Customer *c);
 // Get the next Customer in line
 Customer *dequeue(CustomerQueue *queue);
 
+// Get the number of customers in the queue
+int queue_count(CustomerQueue *queue);
+
 // Print the queue for readability
 void print(CustomerQueue *queue);
 

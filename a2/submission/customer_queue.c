@@ -3,6 +3,7 @@
 struct _CustomerQueue {
   struct _Node *head;
   struct _Node *rear;
+  int count;
 };
 
 struct _Node {
@@ -14,6 +15,7 @@ CustomerQueue *create_queue() {
   CustomerQueue *queue = (CustomerQueue *)malloc(sizeof(CustomerQueue));
   queue->head = NULL;
   queue->rear = NULL;
+  queue->count = 0;
 
   return queue;
 }
@@ -24,10 +26,11 @@ void *enqueue(CustomerQueue *queue, Customer *c) {
   temp->next = NULL;
   if (queue->head == NULL && queue->rear == NULL) {
     queue->head = queue->rear = temp;
-    return;
+  } else {
+    queue->rear->next = temp;
+    queue->rear = temp;
   }
-  queue->rear->next = temp;
-  queue->rear = temp;
+  queue->count += 1;
 
   return queue;
 }
@@ -36,16 +39,21 @@ Customer *dequeue(CustomerQueue *queue) {
   Customer *c = NULL;
   if (queue->head == NULL) { // Queue is empty
     return NULL;
-  } else if (queue->head == queue->rear) { // Only 1 node in queue
-    c = queue->head->customer;
+  }
+
+  c = queue->head->customer;
+  queue->count -= 1;
+
+  if (queue->head == queue->rear) { // Only 1 node in queue
     queue->head = queue->rear = NULL;
   } else {
-    c = queue->head->customer;
     queue->head = queue->head->next;
   }
 
   return c;
 }
+
+int queue_count(CustomerQueue *queue) { return queue->count; }
 
 void print(CustomerQueue *queue) {
   Node *curr = queue->head;

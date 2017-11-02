@@ -2,10 +2,79 @@
 #include "customers.h"
 #include "utils.h"
 #include <errno.h>
+#include <pthread.h>
 #include <stdio.h>
 #include <unistd.h>
 
 #define NUM_CLERKS 2
+#define NUM_QUEUES 4
+
+CustomerQueue *queues[NUM_QUEUES];
+
+// Mutexes and Condition variables
+pthread_mutex_t queue_lock;
+pthread_cond_t queue_cond = PTHREAD_COND_INITIALIZER;
+
+void print_queue_lengths() {
+  printf("\n");
+  int i;
+  for (i = 0; i < NUM_QUEUES; i += 1) {
+    printf("Queue %d length is %d\n", i, queue_count(queues[i]));
+  }
+  printf("\n");
+}
+
+void get_shortest_queue(CustomerQueue **queue, int *index, int *length) {
+  int shortest_length = -1;
+  int shortest_queue_index = 0;
+
+  int i;
+  for (i = 0; i < NUM_QUEUES; i += 1) {
+    if (queue_count(queues[i]) < shortest_length || shortest_length == -1) {
+      shortest_length = queue_count(queues[i]);
+      shortest_queue_index = i;
+    }
+  }
+
+  *queue = queues[shortest_queue_index];
+  *index = shortest_queue_index;
+  *length = shortest_length;
+}
+
+void get_longest_queue(CustomerQueue **queue, int *index, int *length) {
+  int longest_length = -1;
+  int longest_queue_index = 0;
+
+  int i;
+  for (i = 0; i < NUM_QUEUES; i += 1) {
+    if (queue_count(queues[i]) > longest_length || longest_length == -1) {
+      longest_length = queue_count(queues[i]);
+      longest_queue_index = i;
+    }
+  }
+
+  *queue = queues[longest_queue_index];
+  *index = longest_queue_index;
+  *length = longest_length;
+}
+
+void *enqueue_with_customer(Customer *customer) {
+  int index;
+  int length;
+  CustomerQueue *queue;
+
+  pthread_mutex_lock(&queue_lock);
+
+  get_shortest_queue(&queue, &index, &length);
+  enqueue(queue, customer);
+  print_queue_lengths();
+
+  printf("A customer enters a queue: the queue ID %1d, and length of the queue "
+         "%1d. \n",
+         index, length);
+
+  pthread_mutex_unlock(&queue_lock);
+}
 
 void *customer_thread(void *customer_pointer) {
   Customer *customer = (Customer *)customer_pointer;
@@ -13,14 +82,27 @@ void *customer_thread(void *customer_pointer) {
 
   usleep(customer->arrival_time * 100000);
 
-  printf("Customer %d has arrived\n", customer->id);
+  printf("A customer arrives: customer ID %2d. \n", customer->id);
+  enqueue_with_customer(customer);
 
   return NULL;
 }
 
 void *clerk_thread() {
   printf("I am clerk thread\n");
+
+  // while (true) {
+  //   pthread_mutex_lock(&queue_lock);
+  // }
+
   return NULL;
+}
+
+void create_queues() {
+  int i;
+  for (i = 0; i < NUM_QUEUES; i += 1) {
+    queues[i] = create_queue();
+  }
 }
 
 int main(int argc, char *argv[]) {
@@ -32,8 +114,9 @@ int main(int argc, char *argv[]) {
     return;
   }
 
-  int num_customers = 0;
+  // Read file
 
+  int num_customers = 0;
   FILE *fp = fopen(argv[1], "r");
   char line[256];
 
@@ -63,6 +146,17 @@ int main(int argc, char *argv[]) {
     print_customer(customers[i]);
   }
   printf("\n");
+
+  // Init pthread
+  if (pthread_mutex_init(&queue_lock, NULL) != 0) {
+    printf("\n mutex init failed\n");
+    return 2;
+  }
+
+  // Create queues
+  for (i = 0; i < NUM_QUEUES; i += 1) {
+    queues[i] = create_queue();
+  }
 
   // Create clerk threds
   pthread_t clerks_threads[NUM_CLERKS];
@@ -96,6 +190,9 @@ int main(int argc, char *argv[]) {
       return 2;
     }
   }
+
+  // Destroy muxtexes and condition variables
+  pthread_mutex_destroy(&queue_lock);
 
   return 1;
 }
