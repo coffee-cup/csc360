@@ -11,10 +11,16 @@
 
 CustomerQueue *queues[NUM_QUEUES];
 int total_customers_remaining = 0;
+static struct timeval simulation_start_time;
+double total_waiting_time = 0;
 
 // Mutexes and Condition variables
 pthread_mutex_t queue_lock;
+pthread_mutex_t time_lock;
 pthread_cond_t queue_cond = PTHREAD_COND_INITIALIZER;
+
+// Start Lock Section
+// Must have lock on queue_lock before calling these methods
 
 void print_queue_lengths() {
   printf("\n");
@@ -59,6 +65,8 @@ void get_longest_queue(CustomerQueue **queue, int *index, int *length) {
   *length = longest_length;
 }
 
+// End Lock Section
+
 void enqueue_customer(Customer *customer) {
   int index;
   int length;
@@ -80,25 +88,40 @@ void enqueue_customer(Customer *customer) {
 }
 
 void process_customer(Customer *customer, int clerk_id) {
-  printf("A clerk starts serving a customer: start time , the customer ID %2d, "
+
+  pthread_mutex_lock(&time_lock);
+  double start_time = get_current_simulation_time(simulation_start_time);
+  pthread_mutex_unlock(&time_lock);
+
+  printf("A clerk starts serving a customer: start time %.2f, the customer ID "
+         "%2d, "
          "the clerk ID %1d. \n",
-         customer->id, clerk_id);
+         start_time, customer->id, clerk_id);
 
   usleep(customer->service_time * 100000);
 
-  printf("A clerk finishes serving a customer: end time, the customer ID %2d, "
+  pthread_mutex_lock(&time_lock);
+  double end_time = get_current_simulation_time(simulation_start_time);
+  total_waiting_time += end_time - start_time;
+  pthread_mutex_unlock(&time_lock);
+
+  printf("A clerk finishes serving a customer: end time %.2f, the customer ID "
+         "%2d, "
          "the clerk ID %1d. \n",
-         customer->id, clerk_id);
+         end_time, customer->id, clerk_id);
 }
 
 void *customer_thread(void *customer_pointer) {
   Customer *customer = (Customer *)customer_pointer;
   // printf("Customer thread %d\n", customer->id);
 
+  // Wait to arrive
   usleep(customer->arrival_time * 100000);
 
   printf("A customer arrives: customer ID %2d. \n", customer->id);
   enqueue_customer(customer);
+
+  // This thread can end, clerk thread will handle customer now
 
   return NULL;
 }
@@ -116,9 +139,11 @@ void *clerk_thread(void *clerk_id_pointer) {
 
     pthread_mutex_lock(&queue_lock);
 
+    // Get the customer in the longest queue
     get_longest_queue(&queue, &index, &length);
     customer = dequeue(queue);
 
+    // No customers in queue, wait on condition variable
     if (customer == NULL) {
       printf("Clerk %d waiting\n", clerk_id);
       pthread_cond_wait(&queue_cond, &queue_lock);
@@ -185,6 +210,9 @@ int main(int argc, char *argv[]) {
 
   total_customers_remaining = num_customers;
 
+  // Record simulation start time
+  gettimeofday(&simulation_start_time, NULL); // record simulation start time
+
   // Init pthread
   if (pthread_mutex_init(&queue_lock, NULL) != 0) {
     printf("\n mutex init failed\n");
@@ -202,7 +230,6 @@ int main(int argc, char *argv[]) {
     int *clerk_id =
         (int *)malloc(sizeof(int)); // Force compiler to create new variable
     *clerk_id = i;
-    printf("Creating clerk %d - %p\n", *clerk_id, clerk_id);
     if (pthread_create(&clerks_threads[i], NULL, clerk_thread, clerk_id)) {
       fprintf(stderr, "Error creating clerk thread %d\n", i);
       return 2;
@@ -235,6 +262,11 @@ int main(int argc, char *argv[]) {
 
   // Destroy muxtexes and condition variables
   pthread_mutex_destroy(&queue_lock);
+
+  double average_waiting_time = total_waiting_time / num_customers;
+  printf("The average waiting time for all customers in the system is: %.2f "
+         "seconds. \n",
+         average_waiting_time);
 
   return 1;
 }
