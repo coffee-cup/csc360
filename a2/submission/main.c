@@ -74,6 +74,7 @@ void enqueue_customer(Customer *customer) {
 
   pthread_mutex_lock(&queue_lock);
 
+  total_customers_remaining -= 1;
   get_shortest_queue(&queue, &index, &length);
   enqueue(queue, customer);
   pthread_cond_signal(&queue_cond);
@@ -141,11 +142,17 @@ void *clerk_thread(void *clerk_id_pointer) {
 
     // Get the customer in the longest queue
     get_longest_queue(&queue, &index, &length);
-    customer = dequeue(queue);
 
     // No customers in queue, wait on condition variable
-    if (customer == NULL) {
-      printf("Clerk %d waiting\n", clerk_id);
+    customer = dequeue(queue);
+
+    while (customer == NULL) {
+      if (total_customers_remaining <= 0) {
+        pthread_cond_signal(&queue_cond);
+        pthread_mutex_unlock(&queue_lock);
+        return;
+      }
+
       pthread_cond_wait(&queue_cond, &queue_lock);
       customer = dequeue(queue);
     }
@@ -187,7 +194,7 @@ int main(int argc, char *argv[]) {
   Customer *customers[num_customers];
 
   int i = 0;
-  while (fgets(line, sizeof(line), fp)) {
+  while (fgets(line, sizeof(line), fp) && i < num_customers) {
     int id;
     int arrival_time;
     int service_time;
@@ -203,6 +210,7 @@ int main(int argc, char *argv[]) {
   }
   fclose(fp);
 
+  printf("There are %d customers\n", num_customers);
   for (i = 0; i < num_customers; i += 1) {
     print_customer(customers[i]);
   }
