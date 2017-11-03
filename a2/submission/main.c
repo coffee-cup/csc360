@@ -182,41 +182,16 @@ int main(int argc, char *argv[]) {
     return;
   }
 
-  // Read file
+  CustomerQueue *customers;
+  parse_customers(argv[1], &customers);
 
-  int num_customers = 0;
-  FILE *fp = fopen(argv[1], "r");
-  char line[256];
-
-  fgets(line, sizeof(line), fp);
-  sscanf(line, "%d", &num_customers);
-
-  Customer *customers[num_customers];
-
-  int i = 0;
-  while (fgets(line, sizeof(line), fp) && i < num_customers) {
-    int id;
-    int arrival_time;
-    int service_time;
-    sscanf(line, "%d:%d,%d", &id, &arrival_time, &service_time);
-
-    if (arrival_time < 0 || service_time < 0) {
-      printf("Invalid times for customer %d -- ignoring\n", id);
-    } else {
-      Customer *c = create_customer(id, arrival_time, service_time);
-      customers[i] = c;
-      i += 1;
-    }
-  }
-  fclose(fp);
-
-  printf("There are %d customers\n", num_customers);
-  for (i = 0; i < num_customers; i += 1) {
-    print_customer(customers[i]);
-  }
-  printf("\n");
-
+  int num_customers = queue_count(customers);
   total_customers_remaining = num_customers;
+
+  // Debug Info
+  // printf("There are %d customers\n", num_customers);
+  // print_queue(customers);
+  // printf("\n");
 
   // Record simulation start time
   gettimeofday(&simulation_start_time, NULL); // record simulation start time
@@ -228,6 +203,7 @@ int main(int argc, char *argv[]) {
   }
 
   // Create queues
+  int i;
   for (i = 0; i < NUM_QUEUES; i += 1) {
     queues[i] = create_queue();
   }
@@ -246,12 +222,15 @@ int main(int argc, char *argv[]) {
 
   // Create customer threads
   pthread_t customer_threads[num_customers];
-  for (i = 0; i < num_customers; i += 1) {
-    if (pthread_create(&customer_threads[i], NULL, customer_thread,
-                       customers[i])) {
-      fprintf(stderr, "Error creating customer thread %d\n", customers[i]->id);
+  Customer *c = dequeue(customers);
+  i = 0;
+  while (c != NULL) {
+    if (pthread_create(&customer_threads[i], NULL, customer_thread, c)) {
+      fprintf(stderr, "Error creating customer thread %d\n", c->id);
       return 2;
     }
+    c = dequeue(customers);
+    i += 1;
   }
 
   // Wait on all threads to return
@@ -261,9 +240,10 @@ int main(int argc, char *argv[]) {
       return 2;
     }
   }
+
   for (i = 0; i < num_customers; i += 1) {
     if (pthread_join(customer_threads[i], NULL)) {
-      fprintf(stderr, "Error joining customer thread %d\n", customers[i]->id);
+      fprintf(stderr, "Error joining customer thread\n");
       return 2;
     }
   }

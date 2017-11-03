@@ -20,6 +20,6 @@ Customer *dequeue(CustomerQueue *queue);
 int queue_count(CustomerQueue *queue);
 
 // Print the queue for readability
-void print(CustomerQueue *queue);
+void print_queue(CustomerQueue *queue);
 
 #endif

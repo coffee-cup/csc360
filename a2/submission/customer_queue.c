@@ -55,7 +55,7 @@ Customer *dequeue(CustomerQueue *queue) {
 
 int queue_count(CustomerQueue *queue) { return queue->count; }
 
-void print(CustomerQueue *queue) {
+void print_queue(CustomerQueue *queue) {
   Node *curr = queue->head;
   Customer *c;
 
