@@ -12,9 +12,10 @@
 typedef struct _Customer Customer;
 
 struct _Customer {
-  int id;           /* The ID of the customer */
-  int arrival_time; /* Arrival time of the customer */
-  int service_time; /* Service time of the customer */
+  int id;                 /* The ID of the customer */
+  int arrival_time;       /* Arrival time of the customer */
+  int service_time;       /* Service time of the customer */
+  double start_wait_time; /* The time the customer enters the queue */
 };
 
 Customer *create_customer(int id, int arrival_time, int service_time);

@@ -91,19 +91,22 @@ void enqueue_customer(Customer *customer) {
 void process_customer(Customer *customer, int clerk_id) {
 
   pthread_mutex_lock(&time_lock);
-  double start_time = get_current_simulation_time(simulation_start_time);
+  double start_process_time =
+      get_current_simulation_time(simulation_start_time);
+  total_waiting_time += start_process_time - customer->start_wait_time;
   pthread_mutex_unlock(&time_lock);
 
   printf("A clerk starts serving a customer: start time %.2f, the customer ID "
          "%2d, "
          "the clerk ID %1d. \n",
-         start_time, customer->id, clerk_id);
+         start_process_time, customer->id, clerk_id);
+  // printf("\nWait time %.2f\n", start_process_time -
+  // customer->start_wait_time);
 
   usleep(customer->service_time * 100000);
 
   pthread_mutex_lock(&time_lock);
   double end_time = get_current_simulation_time(simulation_start_time);
-  total_waiting_time += end_time - start_time;
   pthread_mutex_unlock(&time_lock);
 
   printf("A clerk finishes serving a customer: end time %.2f, the customer ID "
@@ -114,15 +117,22 @@ void process_customer(Customer *customer, int clerk_id) {
 
 void *customer_thread(void *customer_pointer) {
   Customer *customer = (Customer *)customer_pointer;
-  // printf("Customer thread %d\n", customer->id);
 
   // Wait to arrive
   usleep(customer->arrival_time * 100000);
 
   printf("A customer arrives: customer ID %2d. \n", customer->id);
-  enqueue_customer(customer);
 
-  // This thread can end, clerk thread will handle customer now
+  // Set the initial arrival time
+  // We don't need a mutex because this is the only
+  // thread that will be able to edit the customer struct
+  // at this point
+  pthread_mutex_lock(&time_lock);
+  customer->start_wait_time =
+      get_current_simulation_time(simulation_start_time);
+  pthread_mutex_unlock(&time_lock);
+
+  enqueue_customer(customer);
 
   return NULL;
 }

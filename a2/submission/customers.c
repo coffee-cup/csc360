@@ -5,6 +5,7 @@ Customer *create_customer(int id, int arrival_time, int service_time) {
   c->id = id;
   c->arrival_time = arrival_time;
   c->service_time = service_time;
+  c->start_wait_time = 0;
 
   return c;
 }
