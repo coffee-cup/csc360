@@ -16,6 +16,11 @@ void parse_customers(char *filename, CustomerQueue **customers_queue) {
   int num_customers = 0;
 
   FILE *fp = fopen(filename, "r");
+  if (fp == NULL) {
+    fprintf(stderr, "Error opening file %s\n", filename);
+    exit(1);
+  }
+
   char line[256];
 
   fgets(line, sizeof(line), fp);

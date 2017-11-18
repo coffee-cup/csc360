@@ -79,8 +79,6 @@ void enqueue_customer(Customer *customer) {
   enqueue(queue, customer);
   pthread_cond_signal(&queue_cond);
 
-  // print_queue_lengths();
-
   printf("A customer enters a queue: the queue ID %1d, and length of the queue "
          "%1d. \n",
          index, length);
@@ -89,7 +87,6 @@ void enqueue_customer(Customer *customer) {
 }
 
 void process_customer(Customer *customer, int clerk_id) {
-
   pthread_mutex_lock(&time_lock);
   double start_process_time =
       get_current_simulation_time(simulation_start_time);
@@ -100,8 +97,6 @@ void process_customer(Customer *customer, int clerk_id) {
          "%2d, "
          "the clerk ID %1d. \n",
          start_process_time, customer->id, clerk_id);
-  // printf("\nWait time %.2f\n", start_process_time -
-  // customer->start_wait_time);
 
   usleep(customer->service_time * 100000);
 
@@ -124,7 +119,7 @@ void *customer_thread(void *customer_pointer) {
   printf("A customer arrives: customer ID %2d. \n", customer->id);
 
   // Set the initial arrival time
-  // We don't need a mutex because this is the only
+  // We don't need a mutex (for the customer) because this is the only
   // thread that will be able to edit the customer struct
   // at this point
   pthread_mutex_lock(&time_lock);
@@ -139,7 +134,6 @@ void *customer_thread(void *customer_pointer) {
 
 void *clerk_thread(void *clerk_id_pointer) {
   int clerk_id = *((int *)clerk_id_pointer);
-  // printf("I am clerk thread %d\n", clerk_id);
 
   while (TRUE) {
     Customer *customer;
@@ -158,7 +152,8 @@ void *clerk_thread(void *clerk_id_pointer) {
 
     while (customer == NULL) {
       if (total_customers_remaining <= 0) {
-        pthread_cond_signal(&queue_cond);
+        pthread_cond_signal(
+            &queue_cond); // Wake other clerk thread if it is also waiting
         pthread_mutex_unlock(&queue_lock);
         return;
       }
@@ -167,7 +162,6 @@ void *clerk_thread(void *clerk_id_pointer) {
       customer = dequeue(queue);
     }
 
-    // print_queue_lengths();
     pthread_mutex_unlock(&queue_lock);
 
     process_customer(customer, clerk_id);
@@ -209,7 +203,7 @@ int main(int argc, char *argv[]) {
   // Init pthread
   if (pthread_mutex_init(&queue_lock, NULL) != 0) {
     printf("\n mutex init failed\n");
-    return 2;
+    exit(1);
   }
 
   // Create queues
@@ -218,7 +212,7 @@ int main(int argc, char *argv[]) {
     queues[i] = create_queue();
   }
 
-  // Create clerk threds
+  // Create clerk threads
   pthread_t clerks_threads[NUM_CLERKS];
   for (i = 0; i < NUM_CLERKS; i += 1) {
     int *clerk_id =
@@ -226,7 +220,7 @@ int main(int argc, char *argv[]) {
     *clerk_id = i;
     if (pthread_create(&clerks_threads[i], NULL, clerk_thread, clerk_id)) {
       fprintf(stderr, "Error creating clerk thread %d\n", i);
-      return 2;
+      exit(1);
     }
   }
 
@@ -237,34 +231,37 @@ int main(int argc, char *argv[]) {
   while (c != NULL) {
     if (pthread_create(&customer_threads[i], NULL, customer_thread, c)) {
       fprintf(stderr, "Error creating customer thread %d\n", c->id);
-      return 2;
+      exit(1);
     }
     c = dequeue(customers);
     i += 1;
   }
 
-  // Wait on all threads to return
-  for (i = 0; i < NUM_CLERKS; i += 1) {
-    if (pthread_join(clerks_threads[i], NULL)) {
-      fprintf(stderr, "Error joining clerk thread %d\n", i);
-      return 2;
-    }
-  }
-
+  // Wait on all customer threads to return
   for (i = 0; i < num_customers; i += 1) {
     if (pthread_join(customer_threads[i], NULL)) {
       fprintf(stderr, "Error joining customer thread\n");
-      return 2;
+      exit(1);
+    }
+  }
+
+  // Wait on all clerk threads to return
+  for (i = 0; i < NUM_CLERKS; i += 1) {
+    if (pthread_join(clerks_threads[i], NULL)) {
+      fprintf(stderr, "Error joining clerk thread %d\n", i);
+      exit(1);
     }
   }
 
   // Destroy muxtexes and condition variables
   pthread_mutex_destroy(&queue_lock);
+  pthread_mutex_destroy(&time_lock);
+  pthread_cond_destroy(&queue_cond);
 
   double average_waiting_time = total_waiting_time / num_customers;
   printf("The average waiting time for all customers in the system is: %.2f "
          "seconds. \n",
          average_waiting_time);
 
-  return 1;
+  return 0;
 }
