@@ -1,4 +1,4 @@
-#include "fat.h"
+#include "fat12.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -9,22 +9,25 @@ int main(int argc, char *argv[]) {
   }
 
   char *filename = argv[1];
-  Fat *fat = create_fat_struct(filename);
-  read_boot_sector(fat);
+  Fat12 *fat12 = create_fat_struct(filename);
+  read_boot_sector(fat12);
+
+  // printf("\n");
+  // printf("OS Name: %s\n", fat12->boot->osname);
+  // printf("Label of the disk: %s\n", fat12->boot->volume_label);
+  // printf("Total size of the disk: \n");
+  // printf("Free size of the disk: \n");
+
+  // printf("\n==============\n");
+  // printf("The number of files in the root directory (not including "
+  //        "subdirectories): \n");
+
+  // printf("\n==============\n");
+  // printf("Number of FAT copies: %d\n", fat12->boot->num_fats);
+  // printf("Sectors per FAT: %d\n", fat12->boot->sectors_per_fat);
 
   printf("\n");
-  printf("OS Name: %s\n", fat->boot->osname);
-  printf("Label of the disk: %s\n", fat->boot->volume_label);
-  printf("Total size of the disk: \n");
-  printf("Free size of the disk: \n");
+  read_root_directory(fat12);
 
-  printf("\n==============\n");
-  printf("The number of files in the root directory (not including "
-         "subdirectories): \n");
-
-  printf("\n==============\n");
-  printf("Number of FAT copies: %d\n", fat->boot->num_fats);
-  printf("Sectors per FAT: %d\n", fat->boot->sectors_per_fat);
-
-  destroy_fat_struct(fat);
+  destroy_fat_struct(fat12);
 }
