@@ -23,11 +23,10 @@ typedef struct _DirEntry DirEntry;
 
 // Struct definitions
 struct _Fat12 {
-  char *filename;                    /* The filename of the disk image */
-  FILE *fp;                          /* The file pointer */
-  int total_size;                    /* Total size of the disk */
-  int free_size;                     /* Free size of the disk */
-  unsigned short int num_files_root; /* Number of files in the root directory */
+  char *filename; /* The filename of the disk image */
+  FILE *fp;       /* The file pointer */
+  int total_size; /* Total size of the disk */
+  int free_size;  /* Free size of the disk */
 
   struct _Boot *boot;
 };

@@ -43,6 +43,7 @@ void read_boot_sector(Fat12 *fat12) {
 
   fseek(fat12->fp, 19, SEEK_SET);
   fread(&boot->total_sectors, 2, 1, fat12->fp);
+  fat12->total_size = boot->total_sectors * SECTOR_SIZE;
 
   fseek(fat12->fp, 22, SEEK_SET);
   fread(&boot->sectors_per_fat, 2, 1, fat12->fp);

@@ -17,8 +17,8 @@ int main(int argc, char *argv[]) {
   printf("\n");
   printf("OS Name: %s\n", fat12->boot->osname);
   printf("Label of the disk: %s\n", fat12->boot->volume_label);
-  printf("Total size of the disk: \n");
-  printf("Free size of the disk: \n");
+  printf("Total size of the disk: %d bytes\n", fat12->total_size);
+  printf("Free size of the disk: %d bytes\n", fat12->free_size);
 
   printf("\n==============\n");
   printf("The number of files in the root directory (not including "

@@ -52,4 +52,6 @@ int main(int argc, char *argv[]) {
 
     index += 1;
   }
+
+  destroy_fat_struct(fat12);
 }
