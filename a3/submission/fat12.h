@@ -1,17 +1,25 @@
 #ifndef FAT
 #define FAT
 
+#include "utils.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
-#define SECTOR_SIZE 512 // bytes
+#define SECTOR_SIZE (512) // bytes
+
+// Attribute Defines
+#define READ_ONLY (0x01)
+#define HIDDEN (0x02)
+#define SYSTEM (0x04)
+#define VOLUME_LABEL (0x08)
+#define SUBDIR (0x10)
+#define ARCHIVE (0x20)
 
 typedef struct _Fat12 Fat12;
 typedef struct _Boot Boot;
 typedef struct _DirEntry DirEntry;
-typedef struct _DosTime DosTime;
-typedef struct _DosDate DosDate;
 
 // Struct definitions
 struct _Fat12 {
@@ -33,18 +41,6 @@ struct _Boot {
   uint16_t sectors_per_fat;  /* The number of sectors per FAT */
   char volume_label[11];     /* The label of the volume */
 };
-
-struct _DosTime {
-  unsigned int two_secs : 5;
-  unsigned int minutes : 6;
-  unsigned int hours : 5;
-} __attribute__((packed));
-
-struct _DosDate {
-  unsigned int date : 5;
-  unsigned int month : 4;
-  unsigned int year : 7;
-} __attribute__((packed));
 
 struct _DirEntry {
   unsigned char name[9]; // extra char for \0
@@ -71,6 +67,16 @@ void read_boot_sector(Fat12 *fat12);
 
 // Read file data from the root directory sector
 void read_root_directory(Fat12 *fat12);
+
+// Count the number of non-subdirs entries in the root directory
+int num_root_files(Fat12 *fat12);
+
+// Get the entry_num'th directory entry from the root directory
+// Returns
+//  -1 if no more entries
+//  0 if entries exist after
+int get_root_directory_entry(DirEntry **direntry_ptr, int entry_num,
+                             Fat12 *fat12);
 
 // Verifies the disk is FAT12
 // Exits with error of not FAT12
