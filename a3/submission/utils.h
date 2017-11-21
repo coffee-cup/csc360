@@ -4,6 +4,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define FALSE (0)
+#define TRUE (1)
+
 typedef struct _DosTime DosTime;
 typedef struct _DosDate DosDate;
 

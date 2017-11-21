@@ -13,21 +13,27 @@ int main(int argc, char *argv[]) {
   read_boot_sector(fat12);
 
   int root_file_count = num_root_files(fat12);
+  free_space(fat12);
 
   printf("\n");
-  printf("OS Name: %s\n", fat12->boot->osname);
-  printf("Label of the disk: %s\n", fat12->boot->volume_label);
-  printf("Total size of the disk: %d bytes\n", fat12->total_size);
-  printf("Free size of the disk: %d bytes\n", fat12->free_size);
+  // printf("OS Name: %s\n", fat12->boot->osname);
+  // printf("Label of the disk: %s\n", fat12->boot->volume_label);
+  // printf("Total size of the disk: %d bytes\n", fat12->total_size);
+  // printf("Free size of the disk: %d bytes\n", fat12->free_size);
 
-  printf("\n==============\n");
-  printf("The number of files in the root directory (not including "
-         "subdirectories): %d\n",
-         root_file_count);
+  // printf("\n==============\n");
+  // printf("The number of files in the root directory (not including "
+  //        "subdirectories): %d\n",
+  //        root_file_count);
 
-  printf("\n==============\n");
-  printf("Number of FAT copies: %d\n", fat12->boot->num_fats);
-  printf("Sectors per FAT: %d\n", fat12->boot->sectors_per_fat);
+  // printf("\n==============\n");
+  // printf("Number of FAT copies: %d\n", fat12->boot->num_fats);
+  // printf("Sectors per FAT: %d\n", fat12->boot->sectors_per_fat);
+
+  // DirEntry *direntry;
+  // get_root_directory_entry(&direntry, 0, fat12);
+  // printf("logical cluster %d\n", direntry->first_logical_cluster);
+  // read_fat_entry(0, direntry->first_logical_cluster, fat12);
 
   destroy_fat_struct(fat12);
 }

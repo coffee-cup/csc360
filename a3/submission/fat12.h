@@ -77,6 +77,16 @@ int num_root_files(Fat12 *fat12);
 int get_root_directory_entry(DirEntry **direntry_ptr, int entry_num,
                              Fat12 *fat12);
 
+// Returns the entry_num'th value in the fat table table_num
+uint16_t get_fat_value(int table_num, int entry_num, Fat12 *fat12);
+
+// Get the next logical cluster that belongs to a file
+// Returns FALSE if no next cluster
+int next_cluster(uint16_t *next, int table_num, int entry_num, Fat12 *fat12);
+
+// Calculate free size on fat12 struct
+void free_space(Fat12 *fat12);
+
 // Verifies the disk is FAT12
 // Exits with error of not FAT12
 void verify_disk(Fat12 *fat12);

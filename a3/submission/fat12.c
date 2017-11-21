@@ -163,6 +163,97 @@ int get_root_directory_entry(DirEntry **direntry_ptr, int entry_num,
   return 0;
 }
 
+uint16_t get_fat_value(int table_num, int entry_num, Fat12 *fat12) {
+  unsigned int fat_offset =
+      ((table_num - 1) * fat12->boot->sectors_per_fat) + SECTOR_SIZE;
+  unsigned int entry_offset = (3 * entry_num) / 2;
+  unsigned int offset = fat_offset + entry_offset;
+
+  uint8_t fullbits;
+  uint8_t halfbits;
+  unsigned int fat_entry = 0;
+
+  printf("\n");
+  printf("entry_num: %d - 0x%04x\n", entry_num, entry_num);
+  printf("fat_offset: %d - 0x%04x\n", fat_offset, fat_offset);
+  printf("entry_offset: %d - 0x%04x\n", entry_offset, entry_offset);
+  printf("offset: %d - 0x%04x\n", offset, offset);
+  printf("\n");
+
+  // If n is even, then physical location of the entry
+  //    is the low four bits in location 1+(3*n)/2
+  //    and the 8 bits in location (3*n)/2
+  // If n is odd, then physical location of the entry
+  //    is the high four bits in location (3*n)/2
+  //    and the 8 bits in location 1+(3*n)/2
+  if (entry_num % 2 == 0) {
+    fseek(fat12->fp, offset, SEEK_SET);
+    fread(&fullbits, 8, 1, fat12->fp);
+
+    fseek(fat12->fp, offset + 1, SEEK_SET);
+    fread(&halfbits, 8, 1, fat12->fp);
+
+    fat_entry = (halfbits << 12) | fullbits;
+  } else {
+    printf("eight bits at 0x%04x\n", offset + 1);
+    printf("high four bits at 0x%x\n", offset);
+
+    fseek(fat12->fp, offset + 1, SEEK_SET);
+    fread(&fullbits, 8, 1, fat12->fp);
+
+    fseek(fat12->fp, offset, SEEK_SET);
+    fread(&halfbits, 8, 1, fat12->fp);
+
+    halfbits = halfbits >> 4;
+
+    fat_entry = (fullbits << 4) | halfbits;
+  }
+
+  printf("\n");
+  printf("halfbits: 0x%02x\n", halfbits);
+  printf("fullbits: 0x%02x\n", fullbits);
+
+  // printf("\n");
+  // printf("entry_num: %d\n", entry_num);
+  // printf("fat_entry: %d\n", fat_entry);
+
+  printf("\nFAT VALUE %d - 0x%03x\n", fat_entry, fat_entry);
+  return fat_entry;
+}
+
+int next_cluster(uint16_t *next, int table_num, int entry_num, Fat12 *fat12) {
+  uint16_t fat_value = get_fat_value(table_num, entry_num, fat12);
+  if (fat_value >= 0xFF8) { // TODO: maybe 0xFF0
+    return FALSE;
+  }
+
+  *next = fat_value;
+  return TRUE;
+}
+
+// correct first
+// 1389568
+// 1338880
+void free_space(Fat12 *fat12) {
+  int i, j;
+  int free_sectors = 0;
+
+  for (i = 0; i < 1; i += 1) {
+    for (j = 0; j * 12 < 10 * SECTOR_SIZE * 8; j += 1) {
+
+      int fat_value = get_fat_value(i, j, fat12);
+      printf("Table %d Entry %d Value %d\n", i, j, fat_value);
+      if (fat_value == 0x00) {
+        printf("Free!\n");
+        free_sectors += 1;
+      }
+    }
+  }
+
+  fat12->free_size = free_sectors * SECTOR_SIZE;
+  printf("Free size %d bytes\n", fat12->free_size);
+}
+
 void verify_disk(Fat12 *fat12) {
   if (fat12->boot->bytes_per_sector != SECTOR_SIZE) {
     printf("Disk it not FAT12");
