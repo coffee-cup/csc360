@@ -55,6 +55,8 @@ int main(int argc, char *argv[]) {
 
     int count = 0;
     uint16_t next = found_entry->first_logical_cluster;
+    printf("%d: next cluster: %d - 0x%x\n", count, next, next);
+    count += 1;
     while (next_cluster(&next, 1, next, fat12)) {
       printf("%d: next cluster: %d - 0x%x\n", count, next, next);
       count += 1;
