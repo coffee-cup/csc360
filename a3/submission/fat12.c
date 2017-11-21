@@ -245,16 +245,16 @@ void free_space(Fat12 *fat12) {
     for (j = 0; j * 12 < 10 * SECTOR_SIZE * 8; j += 1) {
 
       int fat_value = get_fat_value(i, j, fat12);
-      printf("Table %d Entry %d Value %d\n", i, j, fat_value);
+      // printf("Table %d Entry %d Value %d\n", i, j, fat_value);
       if (fat_value == 0x00) {
-        printf("Free!\n");
+        // printf("Free!\n");
         free_sectors += 1;
       }
     }
   }
 
   fat12->free_size = free_sectors * SECTOR_SIZE;
-  printf("Free size %d bytes\n", fat12->free_size);
+  // printf("Free size %d bytes\n", fat12->free_size);
 }
 
 void verify_disk(Fat12 *fat12) {

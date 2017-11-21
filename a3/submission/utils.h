@@ -1,6 +1,7 @@
 #ifndef UTILS
 #define UTILS
 
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -25,5 +26,8 @@ struct _DosDate {
 void format_time(char *s, DosTime *time);
 
 void format_date(char *s, DosDate *date);
+
+// Copy num_bytes at location from file fp1 to file fp2
+void copy_bytes(int num_bytes, int location, FILE *fp1, FILE *fp2);
 
 #endif
