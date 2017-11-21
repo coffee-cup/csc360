@@ -51,11 +51,13 @@ int main(int argc, char *argv[]) {
     printf("File %s found. Start Cluster %d\n", search_filename,
            found_entry->first_logical_cluster);
 
-    uint16_t next;
-    if (!next_cluster(&next, 1, found_entry->first_logical_cluster, fat12)) {
-      printf("No more clusters\n");
-    } else {
-      printf("\nnext cluster: %d - 0x%x\n", next, next);
+    printf("\nNeed %d clusters\n", found_entry->file_size / SECTOR_SIZE);
+
+    int count = 0;
+    uint16_t next = found_entry->first_logical_cluster;
+    while (next_cluster(&next, 1, next, fat12)) {
+      printf("%d: next cluster: %d - 0x%x\n", count, next, next);
+      count += 1;
     }
   }
 

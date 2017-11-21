@@ -173,12 +173,12 @@ uint16_t get_fat_value(int table_num, int entry_num, Fat12 *fat12) {
   uint8_t halfbits;
   unsigned int fat_entry = 0;
 
-  printf("\n");
-  printf("entry_num: %d - 0x%04x\n", entry_num, entry_num);
-  printf("fat_offset: %d - 0x%04x\n", fat_offset, fat_offset);
-  printf("entry_offset: %d - 0x%04x\n", entry_offset, entry_offset);
-  printf("offset: %d - 0x%04x\n", offset, offset);
-  printf("\n");
+  // printf("\n");
+  // printf("entry_num: %d - 0x%04x\n", entry_num, entry_num);
+  // printf("fat_offset: %d - 0x%04x\n", fat_offset, fat_offset);
+  // printf("entry_offset: %d - 0x%04x\n", entry_offset, entry_offset);
+  // printf("offset: %d - 0x%04x\n", offset, offset);
+  // printf("\n");
 
   // If n is even, then physical location of the entry
   //    is the low four bits in location 1+(3*n)/2
@@ -187,6 +187,9 @@ uint16_t get_fat_value(int table_num, int entry_num, Fat12 *fat12) {
   //    is the high four bits in location (3*n)/2
   //    and the 8 bits in location 1+(3*n)/2
   if (entry_num % 2 == 0) {
+    // printf("eight bits at 0x%04x\n", offset);
+    // printf("low four bits at 0x%x\n", offset + 1);
+
     fseek(fat12->fp, offset, SEEK_SET);
     fread(&fullbits, 8, 1, fat12->fp);
 
@@ -195,8 +198,8 @@ uint16_t get_fat_value(int table_num, int entry_num, Fat12 *fat12) {
 
     fat_entry = (halfbits << 12) | fullbits;
   } else {
-    printf("eight bits at 0x%04x\n", offset + 1);
-    printf("high four bits at 0x%x\n", offset);
+    // printf("eight bits at 0x%04x\n", offset + 1);
+    // printf("high four bits at 0x%x\n", offset);
 
     fseek(fat12->fp, offset + 1, SEEK_SET);
     fread(&fullbits, 8, 1, fat12->fp);
@@ -209,15 +212,15 @@ uint16_t get_fat_value(int table_num, int entry_num, Fat12 *fat12) {
     fat_entry = (fullbits << 4) | halfbits;
   }
 
-  printf("\n");
-  printf("halfbits: 0x%02x\n", halfbits);
-  printf("fullbits: 0x%02x\n", fullbits);
+  // printf("\n");
+  // printf("halfbits: 0x%02x\n", halfbits);
+  // printf("fullbits: 0x%02x\n", fullbits);
 
   // printf("\n");
   // printf("entry_num: %d\n", entry_num);
   // printf("fat_entry: %d\n", fat_entry);
 
-  printf("\nFAT VALUE %d - 0x%03x\n", fat_entry, fat_entry);
+  // printf("\nFAT VALUE %d - 0x%03x\n", fat_entry, fat_entry);
   return fat_entry;
 }
 
