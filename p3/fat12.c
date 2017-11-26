@@ -26,7 +26,7 @@ void destroy_fat_struct(Fat12 *fat12) {
 
 void read_disk_image(Fat12 *fat12) {}
 
-void read_boot_sector(Fat12 *fat12) {
+void read_disk_info(Fat12 *fat12) {
   Boot *boot = fat12->boot; // for convenience
 
   fseek(fat12->fp, 3, SEEK_SET);
@@ -54,6 +54,7 @@ void read_boot_sector(Fat12 *fat12) {
     strcpy(boot->volume_label, "NO NAME ");
   }
 
+  // free_space(fat12);
   verify_disk(fat12);
 }
 
@@ -164,7 +165,7 @@ int get_root_directory_entry(DirEntry **direntry_ptr, int entry_num,
 }
 
 uint16_t get_fat_value(int entry_num, Fat12 *fat12) {
-  unsigned int fat_offset = fat12->boot->sectors_per_fat + SECTOR_SIZE;
+  unsigned int fat_offset = SECTOR_SIZE;
   unsigned int entry_offset = (3 * entry_num) / 2;
   unsigned int offset = fat_offset + entry_offset;
 
@@ -173,6 +174,7 @@ uint16_t get_fat_value(int entry_num, Fat12 *fat12) {
   unsigned int fat_entry = 0;
 
   // printf("\n");
+  // printf("sectors per fat: %d\n", fat12->boot->sectors_per_fat);
   // printf("entry_num: %d - 0x%04x\n", entry_num, entry_num);
   // printf("fat_offset: %d - 0x%04x\n", fat_offset, fat_offset);
   // printf("entry_offset: %d - 0x%04x\n", entry_offset, entry_offset);
@@ -219,18 +221,30 @@ uint16_t get_fat_value(int entry_num, Fat12 *fat12) {
   // printf("entry_num: %d\n", entry_num);
   // printf("fat_entry: %d\n", fat_entry);
 
-  // printf("\nFAT VALUE %d - 0x%03x\n", fat_entry, fat_entry);
+  // printf("FAT VALUE %d - 0x%03x\n", fat_entry, fat_entry);
   return fat_entry;
 }
 
 int next_cluster(uint16_t *next, int entry_num, Fat12 *fat12) {
   uint16_t fat_value = get_fat_value(entry_num, fat12);
-  if (fat_value >= 0xFF8) { // TODO: maybe 0xFF0
+  // printf("next: 0x%x\n", fat_value);
+  if (fat_value >= 0xFF0) {
     return FALSE;
   }
 
   *next = fat_value;
   return TRUE;
+}
+
+int next_free_cluster(Fat12 *fat12) {
+  int i;
+  for (i = 2; i <= 2846; i += 1) {
+    int fat_value = get_fat_value(i, fat12);
+    if (fat_value == 0x00) {
+      return i;
+    }
+  }
+  return -1;
 }
 
 // correct first
@@ -256,4 +270,8 @@ void verify_disk(Fat12 *fat12) {
     printf("Disk it not FAT12");
     exit(1);
   }
+}
+
+int get_physical_sector_number(uint16_t logical_sector_number) {
+  return (33 + logical_sector_number - 2) * SECTOR_SIZE;
 }

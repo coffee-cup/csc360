@@ -33,7 +33,7 @@ int main(int argc, char *argv[]) {
 
   char *filename = argv[1];
   Fat12 *fat12 = create_fat_struct(filename);
-  read_boot_sector(fat12);
+  read_disk_info(fat12);
 
   int index = 0;
   int status;

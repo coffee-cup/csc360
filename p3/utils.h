@@ -28,9 +28,13 @@ void format_time(char *s, DosTime *time);
 void format_date(char *s, DosDate *date);
 
 // Copy num_bytes at location from file fp1 to file fp2
-void copy_bytes(int num_bytes, int location, FILE *fp1, FILE *fp2);
+void copy_bytes(int num_bytes, int from_location, int to_location,
+                FILE *from_fp, FILE *to_fp);
 
 // Converts a string to uppercase
 void uppercase_string(char *s);
+
+// Returns the size of a file pointer in bytes
+int get_filesize(FILE *fp);
 
 #endif

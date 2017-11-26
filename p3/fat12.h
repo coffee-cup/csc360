@@ -62,7 +62,7 @@ void destroy_fat_struct(Fat12 *fat12);
 void read_disk_image(Fat12 *fat12);
 
 // Read data from the boot sector
-void read_boot_sector(Fat12 *fat12);
+void read_disk_info(Fat12 *fat12);
 
 // Read file data from the root directory sector
 void read_root_directory(Fat12 *fat12);
@@ -84,11 +84,18 @@ uint16_t get_fat_value(int entry_num, Fat12 *fat12);
 // Returns FALSE if no next cluster
 int next_cluster(uint16_t *next, int entry_num, Fat12 *fat12);
 
+// Gets the entry number of next free cluster
+// Returns -1 if no free cluster available
+int next_free_cluster(Fat12 *fat12);
+
 // Calculate free size on fat12 struct
 void free_space(Fat12 *fat12);
 
 // Verifies the disk is FAT12
 // Exits with error of not FAT12
 void verify_disk(Fat12 *fat12);
+
+// Returns physical sector number given the logical sector number
+int get_physical_sector_number(uint16_t logical_sector_number);
 
 #endif

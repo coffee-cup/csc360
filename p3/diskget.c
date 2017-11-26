@@ -12,6 +12,8 @@ void copy_found_file(DirEntry *direntry, Fat12 *fat12, FILE *fp,
   int count = 0;
   uint16_t next = direntry->first_logical_cluster;
 
+  // printf("first sector: %d\n", next);
+
   while (1) {
     int physical_sector = (33 + next - 2) * 512;
     int bytes_to_copy = direntry->file_size - (count * SECTOR_SIZE);
@@ -19,11 +21,18 @@ void copy_found_file(DirEntry *direntry, Fat12 *fat12, FILE *fp,
       bytes_to_copy = SECTOR_SIZE;
     }
 
-    copy_bytes(bytes_to_copy, physical_sector, fat12->fp, fp);
+    if (bytes_to_copy < 0) {
+      break;
+    }
+
+    int to_location = ftell(fp);
+    copy_bytes(bytes_to_copy, physical_sector, to_location, fat12->fp, fp);
 
     if (!next_cluster(&next, next, fat12)) {
       break;
     }
+
+    // printf("next sector is %d\n", next);
 
     count += 1;
   }
@@ -38,7 +47,7 @@ int main(int argc, char *argv[]) {
   char *disk_filename = argv[1];   // The FAT12 image file
   char *search_filename = argv[2]; // The file to copy
   Fat12 *fat12 = create_fat_struct(disk_filename);
-  read_boot_sector(fat12);
+  read_disk_info(fat12);
 
   // Convert filename to uppercase
   uppercase_string(search_filename);

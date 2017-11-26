@@ -10,10 +10,10 @@ int main(int argc, char *argv[]) {
 
   char *filename = argv[1];
   Fat12 *fat12 = create_fat_struct(filename);
-  read_boot_sector(fat12);
+
+  read_disk_info(fat12);
 
   int root_file_count = num_root_files(fat12);
-  free_space(fat12);
 
   printf("\n");
   printf("OS Name: %s\n", fat12->boot->osname);

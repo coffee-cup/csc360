@@ -8,12 +8,15 @@ void format_date(char *s, DosDate *date) {
   sprintf(s, "%d-%02d-%02d", date->year + 1980, date->month, date->date);
 }
 
-void copy_bytes(int num_bytes, int location, FILE *fp1, FILE *fp2) {
+void copy_bytes(int num_bytes, int from_location, int to_location,
+                FILE *from_fp, FILE *to_fp) {
   char buffer[num_bytes];
 
-  fseek(fp1, location, SEEK_SET);
-  fread(buffer, num_bytes, 1, fp1);
-  fwrite(buffer, num_bytes, 1, fp2);
+  fseek(from_fp, from_location, SEEK_SET);
+  fread(buffer, num_bytes, 1, from_fp);
+
+  fseek(to_fp, to_location, SEEK_SET);
+  fwrite(buffer, num_bytes, 1, to_fp);
 }
 
 void uppercase_string(char *s) {
@@ -24,4 +27,14 @@ void uppercase_string(char *s) {
     }
     c++;
   }
+}
+
+int get_filesize(FILE *fp) {
+  int pos_start = ftell(fp);
+
+  fseek(fp, 0, SEEK_END);
+  int size = ftell(fp);
+
+  fseek(fp, pos_start, SEEK_SET);
+  return size;
 }
