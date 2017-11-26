@@ -163,9 +163,8 @@ int get_root_directory_entry(DirEntry **direntry_ptr, int entry_num,
   return 0;
 }
 
-uint16_t get_fat_value(int table_num, int entry_num, Fat12 *fat12) {
-  unsigned int fat_offset =
-      ((table_num - 1) * fat12->boot->sectors_per_fat) + SECTOR_SIZE;
+uint16_t get_fat_value(int entry_num, Fat12 *fat12) {
+  unsigned int fat_offset = fat12->boot->sectors_per_fat + SECTOR_SIZE;
   unsigned int entry_offset = (3 * entry_num) / 2;
   unsigned int offset = fat_offset + entry_offset;
 
@@ -224,8 +223,8 @@ uint16_t get_fat_value(int table_num, int entry_num, Fat12 *fat12) {
   return fat_entry;
 }
 
-int next_cluster(uint16_t *next, int table_num, int entry_num, Fat12 *fat12) {
-  uint16_t fat_value = get_fat_value(table_num, entry_num, fat12);
+int next_cluster(uint16_t *next, int entry_num, Fat12 *fat12) {
+  uint16_t fat_value = get_fat_value(entry_num, fat12);
   if (fat_value >= 0xFF8) { // TODO: maybe 0xFF0
     return FALSE;
   }
@@ -235,26 +234,21 @@ int next_cluster(uint16_t *next, int table_num, int entry_num, Fat12 *fat12) {
 }
 
 // correct first
-// 1389568
-// 1338880
+// 1389568 bytes = 2714 sectors
+//
 void free_space(Fat12 *fat12) {
-  int i, j;
   int free_sectors = 0;
 
-  for (i = 0; i < 1; i += 1) {
-    for (j = 0; j * 12 < 10 * SECTOR_SIZE * 8; j += 1) {
-
-      int fat_value = get_fat_value(i, j, fat12);
-      // printf("Table %d Entry %d Value %d\n", i, j, fat_value);
-      if (fat_value == 0x00) {
-        // printf("Free!\n");
-        free_sectors += 1;
-      }
+  int i;
+  for (i = 2; i <= 2842; i += 1) {
+    int fat_value = get_fat_value(i, fat12);
+    if (fat_value == 0x00) {
+      free_sectors += 1;
     }
   }
 
+  // fat12->free_size = free_sectors;
   fat12->free_size = free_sectors * SECTOR_SIZE;
-  // printf("Free size %d bytes\n", fat12->free_size);
 }
 
 void verify_disk(Fat12 *fat12) {

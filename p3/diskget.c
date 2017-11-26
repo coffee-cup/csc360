@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+// TODO: Update last accessed date
+
 // Copy the directory entry to the file fp
 void copy_found_file(DirEntry *direntry, Fat12 *fat12, FILE *fp,
                      char *search_filename) {
@@ -19,7 +21,7 @@ void copy_found_file(DirEntry *direntry, Fat12 *fat12, FILE *fp,
 
     copy_bytes(bytes_to_copy, physical_sector, fat12->fp, fp);
 
-    if (!next_cluster(&next, 1, next, fat12)) {
+    if (!next_cluster(&next, next, fat12)) {
       break;
     }
 
