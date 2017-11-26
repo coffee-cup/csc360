@@ -15,3 +15,13 @@ void copy_bytes(int num_bytes, int location, FILE *fp1, FILE *fp2) {
   fread(buffer, num_bytes, 1, fp1);
   fwrite(buffer, num_bytes, 1, fp2);
 }
+
+void uppercase_string(char *s) {
+  char *c = s;
+  while (*c) {
+    if (*c != '.' && *c != '\0') {
+      *c = toupper((unsigned char)*c);
+    }
+    c++;
+  }
+}

@@ -40,8 +40,7 @@ int main(int argc, char *argv[]) {
   Fat12 *fat12 = create_fat_struct(disk_filename);
   read_boot_sector(fat12);
 
-  // Convert filename to uppercase
-  uppercase_string(search_filename);
+  // TODO: Uppercase search filename
 
   int file_found = FALSE;
   int index = 0;
