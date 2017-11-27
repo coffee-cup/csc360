@@ -42,10 +42,6 @@ void copy_local_file(Fat12 *fat12, FILE *fp, char *name, char *ext,
     // printf("Copying %d bytes to physical sector %d\n", bytes_to_copy,
     //        to_location);
 
-    if (bytes_left <= 0) {
-      fat_value = 0xFFF;
-    }
-
     next_free = next_free_cluster(fat12, current_fat_index);
     // printf("next free 0x%x (%d)\n", next_free, next_free);
 
@@ -61,16 +57,16 @@ void copy_local_file(Fat12 *fat12, FILE *fp, char *name, char *ext,
 
     printf("\n");
 
-    int i;
-    for (i = 0; i < 5; i += 1) {
-      uint16_t curr_value = get_fat_value(current_fat_index + i, fat12);
-      printf("%d: 0x%03x\n", current_fat_index + i, curr_value);
-    }
+    // int i;
+    // for (i = 0; i < 5; i += 1) {
+    //   uint16_t curr_value = get_fat_value(current_fat_index + i, fat12);
+    //   printf("%d: 0x%03x\n", current_fat_index + i, curr_value);
+    // }
 
     current_fat_index = next_free;
 
     count += 1;
-    // if (count == 5) {
+    // if (count == 2) {
     //   break;
     // }
   }
