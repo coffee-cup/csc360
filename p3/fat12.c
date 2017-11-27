@@ -4,7 +4,7 @@ Fat12 *create_fat_struct(char *filename) {
   Fat12 *fat12 = (Fat12 *)malloc(sizeof(Fat12));
   fat12->filename = filename;
 
-  FILE *fp = fopen(fat12->filename, "r");
+  FILE *fp = fopen(fat12->filename, "r+");
 
   if (fp == NULL) {
     printf("Error opening file %s\n", filename);
@@ -23,8 +23,6 @@ void destroy_fat_struct(Fat12 *fat12) {
   free(fat12->boot);
   free(fat12);
 }
-
-void read_disk_image(Fat12 *fat12) {}
 
 void read_disk_info(Fat12 *fat12) {
   Boot *boot = fat12->boot; // for convenience
@@ -54,7 +52,7 @@ void read_disk_info(Fat12 *fat12) {
     strcpy(boot->volume_label, "NO NAME ");
   }
 
-  // free_space(fat12);
+  free_space(fat12);
   verify_disk(fat12);
 }
 
@@ -162,6 +160,77 @@ int get_root_directory_entry(DirEntry **direntry_ptr, int entry_num,
   *direntry_ptr = direntry;
 
   return 0;
+}
+
+char *create_root_entry(char *name, char *ext, char attributes,
+                        DosTime *write_time, DosDate *write_date,
+                        uint16_t first_logical_cluster, uint32_t filesize) {
+
+  char *entry = (char *)malloc(32 * sizeof(char));
+  char *p = entry;
+
+  // Init to all 0x00
+  int i;
+  for (i = 0; i < strlen(entry); i += 1) {
+    entry[i] = 0x00;
+  }
+
+  // Name
+  memcpy(p, name, 8);
+
+  // Extension
+  p = entry + 8;
+  memcpy(p, ext, 3);
+
+  // Creation time
+  p = entry + 14;
+  memcpy(p, write_time, 2);
+
+  // Creation date
+  p = entry + 16;
+  memcpy(p, write_date, 2);
+
+  // Last access date
+  p = entry + 18;
+  memcpy(p, write_date, 2);
+
+  // Last write time
+  p = entry + 22;
+  memcpy(p, write_time, 2);
+
+  // Last write date
+  p = entry + 24;
+  memcpy(p, write_date, 2);
+
+  // First logical cluster
+  p = entry + 26;
+  memcpy(p, &first_logical_cluster, 2);
+
+  // Filesize
+  p = entry + 28;
+  memcpy(p, &filesize, 4);
+
+  return entry;
+}
+
+void add_root_entry(Fat12 *fat12, char *root_entry) {
+  int index = 0;
+  int status;
+
+  while (1) {
+    DirEntry *direntry;
+    status = get_root_directory_entry(&direntry, index, fat12);
+
+    if (status == -1) {
+      break;
+    }
+
+    index += 1;
+  }
+
+  int entry_offset = (19 * SECTOR_SIZE) + (index * 32);
+  fseek(fat12->fp, entry_offset, SEEK_SET);
+  fwrite(root_entry, 32, 1, fat12->fp);
 }
 
 uint16_t get_fat_value(int entry_num, Fat12 *fat12) {

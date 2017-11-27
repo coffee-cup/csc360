@@ -4,7 +4,7 @@
 
 int main(int argc, char *argv[]) {
   if (argc < 2 || argc > 2) {
-    printf("filename of disk image is required.\n");
+    printf("Filename of disk image is required.\n");
     exit(1);
   }
 

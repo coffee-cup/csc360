@@ -15,7 +15,7 @@ void copy_found_file(DirEntry *direntry, Fat12 *fat12, FILE *fp,
   // printf("first sector: %d\n", next);
 
   while (1) {
-    int physical_sector = (33 + next - 2) * 512;
+    int physical_sector = get_physical_sector_number(next);
     int bytes_to_copy = direntry->file_size - (count * SECTOR_SIZE);
     if (bytes_to_copy > SECTOR_SIZE) {
       bytes_to_copy = SECTOR_SIZE;
@@ -40,7 +40,7 @@ void copy_found_file(DirEntry *direntry, Fat12 *fat12, FILE *fp,
 
 int main(int argc, char *argv[]) {
   if (argc < 3 || argc > 3) {
-    printf("disk image filename and root directory filename required.\n");
+    printf("Disk image filename and root directory filename required.\n");
     exit(1);
   }
 

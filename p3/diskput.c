@@ -4,47 +4,75 @@
 #include <stdlib.h>
 #include <string.h>
 
-// TODO: Update last accessed date
-
-// Copy the directory entry to the file fp
-void copy_found_file(DirEntry *direntry, Fat12 *fat12, FILE *fp,
-                     char *search_filename) {
+void copy_local_file(Fat12 *fat12, FILE *fp, char *name, char *ext,
+                     uint32_t filesize) {
   int count = 0;
-  uint16_t next = direntry->first_logical_cluster;
 
-  while (1) {
-    int physical_sector = (33 + next - 2) * 512;
-    int bytes_to_copy = direntry->file_size - (count * SECTOR_SIZE);
+  uint16_t next_free = next_free_cluster(fat12);
+  uint16_t first_logical = next_free;
+
+  int bytes_left = filesize;
+
+  DosTime *time;
+  DosDate *date;
+  create_time_date_structs(&time, &date);
+
+  char *root_entry =
+      create_root_entry(name, ext, 0x00, time, date, first_logical, filesize);
+
+  add_root_entry(fat12, root_entry);
+
+  while (bytes_left > 0) {
+    int bytes_to_copy = bytes_left;
     if (bytes_to_copy > SECTOR_SIZE) {
       bytes_to_copy = SECTOR_SIZE;
     }
 
-    // copy_bytes(bytes_to_copy, physical_sector, fat12->fp, fp);
+    int from_location = ftell(fp);
+    int to_location = get_physical_sector_number(next_free);
 
-    if (!next_cluster(&next, next, fat12)) {
-      break;
-    }
+    copy_bytes(bytes_to_copy, from_location, to_location, fp, fat12->fp);
 
-    count += 1;
+    printf("Copying %d bytes to physical sector %d\n", bytes_to_copy,
+           to_location);
+
+    next_free = next_free_cluster(fat12);
+    bytes_left -= bytes_to_copy;
   }
 }
 
 int main(int argc, char *argv[]) {
   if (argc < 3 || argc > 3) {
-    printf("disk image filename and root directory filename required.\n");
+    printf("Disk image filename and root directory filename required.\n");
     exit(1);
   }
 
   char *disk_filename = argv[1]; // The FAT12 image file
   char *copy_filename = argv[2]; // The file to copy
+
+  // Make a copy of the local filename
+  // This copy will not be uppercased
+  char local_filename[strlen(copy_filename) + 1];
+  strcpy(local_filename, copy_filename);
+
+  char name[8];
+  char ext[3];
+  uppercase_string(copy_filename);
+  if (!verify_filename(copy_filename, name, ext)) {
+    printf("Filename is not valid\n");
+    exit(1);
+  }
+
+  printf("%s.%s\n", name, ext);
+
   Fat12 *fat12 = create_fat_struct(disk_filename);
 
   read_disk_info(fat12);
 
-  FILE *copy_fp = fopen(copy_filename, "r");
+  FILE *copy_fp = fopen(local_filename, "r");
 
   if (copy_fp == NULL) {
-    printf("File not found.");
+    printf("File not found.\n");
     exit(1);
   }
 
@@ -56,8 +84,7 @@ int main(int argc, char *argv[]) {
     exit(1);
   }
 
-  int next_free = next_free_cluster(fat12);
-  printf("Next free %d\n", next_free);
+  copy_local_file(fat12, copy_fp, name, ext, filesize);
 
   destroy_fat_struct(fat12);
 }

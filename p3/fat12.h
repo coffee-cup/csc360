@@ -59,8 +59,6 @@ Fat12 *create_fat_struct(char *filename);
 // Close the file pointer and free memory
 void destroy_fat_struct(Fat12 *fat12);
 
-void read_disk_image(Fat12 *fat12);
-
 // Read data from the boot sector
 void read_disk_info(Fat12 *fat12);
 
@@ -76,6 +74,14 @@ int num_root_files(Fat12 *fat12);
 //  0 if entries exist after
 int get_root_directory_entry(DirEntry **direntry_ptr, int entry_num,
                              Fat12 *fat12);
+
+// Creates a 32 byte root entry for a file
+char *create_root_entry(char *name, char *ext, char attributes,
+                        DosTime *write_time, DosDate *write_date,
+                        uint16_t first_logical_cluster, uint32_t filesize);
+
+// Adds a file to the directory entry
+void add_root_entry(Fat12 *fat12, char *root_entry);
 
 // Returns the entry_num'th value in the fat table table_num
 uint16_t get_fat_value(int entry_num, Fat12 *fat12);

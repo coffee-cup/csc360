@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 #define FALSE (0)
 #define TRUE (1)
@@ -27,6 +28,9 @@ void format_time(char *s, DosTime *time);
 
 void format_date(char *s, DosDate *date);
 
+// Creates time and date structs for the current time
+void create_time_date_structs(DosTime **time_ptr, DosDate **date_ptr);
+
 // Copy num_bytes at location from file fp1 to file fp2
 void copy_bytes(int num_bytes, int from_location, int to_location,
                 FILE *from_fp, FILE *to_fp);
@@ -36,5 +40,9 @@ void uppercase_string(char *s);
 
 // Returns the size of a file pointer in bytes
 int get_filesize(FILE *fp);
+
+// Verifies a filename is correct (name + extension)
+// Also, if filename is correct, splits into 8 char name and 3 char ext
+int verify_filename(char *filename, char *name, char *ext);
 
 #endif

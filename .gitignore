@@ -72,3 +72,10 @@ $RECYCLE.BIN/
 # End of https://www.gitignore.io/api/macos,cmake,windows,visualstudiocode
 
 .vscode/
+
+# Custom
+
+ICEBERGS.TEX
+REMINDER.txt
+test.*
+disk2.txt
