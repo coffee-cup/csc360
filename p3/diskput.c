@@ -7,7 +7,7 @@
 void copy_local_file(Fat12 *fat12, FILE *fp, char *name, char *ext,
                      uint32_t filesize) {
 
-  uint16_t current_fat_index = next_free_cluster(fat12, -1);
+  uint16_t current_fat_index = next_free_cluster(-1, fat12);
   uint16_t next_free;
   uint16_t first_logical = current_fat_index;
   uint16_t fat_value;
@@ -21,7 +21,7 @@ void copy_local_file(Fat12 *fat12, FILE *fp, char *name, char *ext,
   char *root_entry =
       create_root_entry(name, ext, 0x00, time, date, first_logical, filesize);
 
-  add_root_entry(fat12, root_entry);
+  add_root_entry(root_entry, fat12);
 
   while (bytes_left > 0) {
     int bytes_to_copy = bytes_left;
@@ -33,7 +33,7 @@ void copy_local_file(Fat12 *fat12, FILE *fp, char *name, char *ext,
     int to_location = get_physical_sector_number(current_fat_index);
 
     copy_bytes(bytes_to_copy, from_location, to_location, fp, fat12->fp);
-    next_free = next_free_cluster(fat12, current_fat_index);
+    next_free = next_free_cluster(current_fat_index, fat12);
 
     bytes_left -= bytes_to_copy;
     if (bytes_left <= 0) {
@@ -42,7 +42,7 @@ void copy_local_file(Fat12 *fat12, FILE *fp, char *name, char *ext,
       fat_value = next_free;
     }
 
-    write_fat_entry(fat12, current_fat_index, fat_value);
+    write_fat_entry(current_fat_index, fat_value, fat12);
 
     current_fat_index = next_free;
   }

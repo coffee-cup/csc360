@@ -81,13 +81,13 @@ char *create_root_entry(char *name, char *ext, char attributes,
                         uint16_t first_logical_cluster, uint32_t filesize);
 
 // Adds a file to the directory entry
-void add_root_entry(Fat12 *fat12, char *root_entry);
+void add_root_entry(char *root_entry, Fat12 *fat12);
 
 // Returns the entry_num'th value in the fat table table_num
 uint16_t get_fat_value(int entry_num, Fat12 *fat12);
 
 // Writes a new fat entry to a specific entry number
-void write_fat_entry(Fat12 *fat12, int entry_num, uint16_t value);
+void write_fat_entry(int entry_num, uint16_t value, Fat12 *fat12);
 
 // Get the next logical cluster that belongs to a file
 // Returns FALSE if no next cluster
@@ -95,7 +95,7 @@ int next_cluster(uint16_t *next, int entry_num, Fat12 *fat12);
 
 // Gets the entry number of next free cluster that is not index
 // Returns -1 if no free cluster available
-int next_free_cluster(Fat12 *fat12, int not_index);
+int next_free_cluster(int not_index, Fat12 *fat12);
 
 // Calculate free size on fat12 struct
 void free_space(Fat12 *fat12);
@@ -106,5 +106,8 @@ void verify_disk(Fat12 *fat12);
 
 // Returns physical sector number given the logical sector number
 int get_physical_sector_number(uint16_t logical_sector_number);
+
+// Returns a root directory entry for a file matching filename
+DirEntry *find_root_entry(char *search_filename, Fat12 *fat12);
 
 #endif

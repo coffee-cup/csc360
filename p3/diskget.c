@@ -46,36 +46,9 @@ int main(int argc, char *argv[]) {
   // Convert filename to uppercase
   uppercase_string(search_filename);
 
-  int file_found = FALSE;
-  int index = 0;
-  int status;
+  DirEntry *found_entry = find_root_entry(search_filename, fat12);
 
-  DirEntry *found_entry;
-
-  // Loop through all files in the root directory
-  while (1) {
-    DirEntry *direntry;
-    status = get_root_directory_entry(&direntry, index, fat12);
-
-    if (status == -1) {
-      break;
-    }
-
-    if (direntry != NULL) {
-      char filename[12 + 1];
-      sprintf(filename, "%s.%s", direntry->name, direntry->ext);
-
-      if (strcmp(filename, search_filename) == 0) {
-        file_found = TRUE;
-        found_entry = direntry;
-        break;
-      }
-    }
-
-    index += 1;
-  }
-
-  if (!file_found) {
+  if (found_entry == NULL) {
     printf("File not found.\n");
   } else {
     FILE *fp = fopen(search_filename, "wb");

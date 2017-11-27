@@ -217,7 +217,7 @@ char *create_root_entry(char *name, char *ext, char attributes,
   return entry;
 }
 
-void add_root_entry(Fat12 *fat12, char *root_entry) {
+void add_root_entry(char *root_entry, Fat12 *fat12) {
   int index = 0;
   int status;
 
@@ -274,7 +274,7 @@ uint16_t get_fat_value(int entry_num, Fat12 *fat12) {
   return fat_entry;
 }
 
-void write_fat_entry(Fat12 *fat12, int entry_num, uint16_t value) {
+void write_fat_entry(int entry_num, uint16_t value, Fat12 *fat12) {
   unsigned int fat_offset = SECTOR_SIZE;
   unsigned int entry_offset = (3 * entry_num) / 2;
   unsigned int offset = fat_offset + entry_offset;
@@ -328,7 +328,7 @@ int next_cluster(uint16_t *next, int entry_num, Fat12 *fat12) {
   return TRUE;
 }
 
-int next_free_cluster(Fat12 *fat12, int not_index) {
+int next_free_cluster(int not_index, Fat12 *fat12) {
   int i;
   for (i = 2; i <= 2846; i += 1) {
     uint16_t fat_value = get_fat_value(i, fat12);
@@ -364,4 +364,33 @@ void verify_disk(Fat12 *fat12) {
 
 int get_physical_sector_number(uint16_t logical_sector_number) {
   return (33 + logical_sector_number - 2) * SECTOR_SIZE;
+}
+
+DirEntry *find_root_entry(char *search_filename, Fat12 *fat12) {
+  int index = 0;
+  int status;
+  DirEntry *found_entry = NULL;
+
+  while (1) {
+    DirEntry *direntry;
+    status = get_root_directory_entry(&direntry, index, fat12);
+
+    if (status == -1) {
+      break;
+    }
+
+    if (direntry != NULL) {
+      char filename[12 + 1];
+      sprintf(filename, "%s.%s", direntry->name, direntry->ext);
+
+      if (strcmp(filename, search_filename) == 0) {
+        found_entry = direntry;
+        break;
+      }
+    }
+
+    index += 1;
+  }
+
+  return found_entry;
 }
