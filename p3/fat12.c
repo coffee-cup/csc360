@@ -52,7 +52,7 @@ void read_disk_info(Fat12 *fat12) {
     strcpy(boot->volume_label, "NO NAME ");
   }
 
-  free_space(fat12);
+  // free_space(fat12);
   verify_disk(fat12);
 }
 
@@ -210,6 +210,8 @@ char *create_root_entry(char *name, char *ext, char attributes,
   p = entry + 26;
   memcpy(p, &first_logical_cluster, 2);
 
+  printf("FIRST LOGICAL %d\n", first_logical_cluster);
+
   // Filesize
   p = entry + 28;
   memcpy(p, &filesize, 4);
@@ -290,7 +292,7 @@ uint16_t get_fat_value(int entry_num, Fat12 *fat12) {
   // printf("halfbits: 0x%02x\n", halfbits);
   // printf("fullbits: 0x%02x\n", fullbits);
 
-  // // printf("\n");
+  // printf("\n");
   // printf("entry_num: %d\n", entry_num);
   // printf("fat_entry: 0x%03x (%d)\n", fat_entry, fat_entry);
   // printf("---\n");
@@ -394,14 +396,14 @@ void write_fat_entry(Fat12 *fat12, int entry_num, uint16_t value) {
     fwrite(&val, 8, 1, fat12->fp);
   }
 
-  printf("\n--- after\n");
-  for (i = entry_num - 5; i <= entry_num + 3; i += 1) {
-    char *pre = "";
-    if (i == entry_num)
-      pre = "-> ";
-    printf("%s%d | 0x%03x\n", pre, i, get_fat_value(i, fat12));
-  }
-  printf("\n");
+  // printf("\n--- after\n");
+  // for (i = entry_num - 5; i <= entry_num + 3; i += 1) {
+  //   char *pre = "";
+  //   if (i == entry_num)
+  //     pre = "-> ";
+  //   printf("%s%d | 0x%03x\n", pre, i, get_fat_value(i, fat12));
+  // }
+  // printf("\n");
 
   // printf("half: 0x%02x\n", halfbits);
   // printf("full: 0x%02x\n", fullbits);

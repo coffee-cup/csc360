@@ -10,17 +10,16 @@ void copy_local_file(Fat12 *fat12, FILE *fp, char *name, char *ext,
 
   uint16_t current_fat_index = next_free_cluster(fat12, -1);
   uint16_t next_free;
-  uint16_t first_logical = next_free;
+  uint16_t first_logical = current_fat_index;
   uint16_t fat_value;
 
   int bytes_left = filesize;
-
-  printf("first logical %d\n", current_fat_index);
 
   DosTime *time;
   DosDate *date;
   create_time_date_structs(&time, &date);
 
+  printf("first logical %d\n", first_logical);
   char *root_entry =
       create_root_entry(name, ext, 0x00, time, date, first_logical, filesize);
 
@@ -70,6 +69,8 @@ void copy_local_file(Fat12 *fat12, FILE *fp, char *name, char *ext,
     //   break;
     // }
   }
+
+  printf("first logical %d 0x%03x\n", first_logical, first_logical);
 }
 
 int main(int argc, char *argv[]) {
@@ -99,6 +100,7 @@ int main(int argc, char *argv[]) {
   Fat12 *fat12 = create_fat_struct(disk_filename);
 
   read_disk_info(fat12);
+  free_space(fat12);
 
   FILE *copy_fp = fopen(local_filename, "r");
 

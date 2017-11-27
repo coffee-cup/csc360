@@ -12,7 +12,7 @@ void copy_found_file(DirEntry *direntry, Fat12 *fat12, FILE *fp,
   int count = 0;
   uint16_t next = direntry->first_logical_cluster;
 
-  // printf("first sector: %d\n", next);
+  printf("first sector: %d\n", next);
 
   while (1) {
     int physical_sector = get_physical_sector_number(next);
