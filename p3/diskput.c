@@ -8,10 +8,14 @@ void copy_local_file(Fat12 *fat12, FILE *fp, char *name, char *ext,
                      uint32_t filesize) {
   int count = 0;
 
-  uint16_t next_free = next_free_cluster(fat12);
+  uint16_t current_fat_index = next_free_cluster(fat12, -1);
+  uint16_t next_free;
   uint16_t first_logical = next_free;
+  uint16_t fat_value;
 
   int bytes_left = filesize;
+
+  printf("NEXT FREE %d\n", current_fat_index);
 
   DosTime *time;
   DosDate *date;
@@ -29,15 +33,33 @@ void copy_local_file(Fat12 *fat12, FILE *fp, char *name, char *ext,
     }
 
     int from_location = ftell(fp);
-    int to_location = get_physical_sector_number(next_free);
+    int to_location = get_physical_sector_number(current_fat_index);
 
     copy_bytes(bytes_to_copy, from_location, to_location, fp, fat12->fp);
 
-    printf("Copying %d bytes to physical sector %d\n", bytes_to_copy,
-           to_location);
+    // printf("Copying %d bytes to physical sector %d\n", bytes_to_copy,
+    //        to_location);
 
-    next_free = next_free_cluster(fat12);
+    if (bytes_left <= 0) {
+      fat_value = 0xFFF;
+    }
+
+    next_free = next_free_cluster(fat12, current_fat_index);
+
     bytes_left -= bytes_to_copy;
+    if (bytes_left <= 0) {
+      fat_value = 0xFFF;
+    } else {
+      fat_value = next_free;
+    }
+    write_fat_entry(fat12, current_fat_index, fat_value);
+
+    current_fat_index = next_free;
+
+    count += 1;
+    // if (count == 2) {
+    //   break;
+    // }
   }
 }
 

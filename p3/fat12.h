@@ -86,13 +86,16 @@ void add_root_entry(Fat12 *fat12, char *root_entry);
 // Returns the entry_num'th value in the fat table table_num
 uint16_t get_fat_value(int entry_num, Fat12 *fat12);
 
+// Writes a new fat entry to a specific entry number
+void write_fat_entry(Fat12 *fat12, int entry_num, uint16_t value);
+
 // Get the next logical cluster that belongs to a file
 // Returns FALSE if no next cluster
 int next_cluster(uint16_t *next, int entry_num, Fat12 *fat12);
 
-// Gets the entry number of next free cluster
+// Gets the entry number of next free cluster that is not index
 // Returns -1 if no free cluster available
-int next_free_cluster(Fat12 *fat12);
+int next_free_cluster(Fat12 *fat12, int not_index);
 
 // Calculate free size on fat12 struct
 void free_space(Fat12 *fat12);

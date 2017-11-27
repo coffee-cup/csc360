@@ -182,6 +182,10 @@ char *create_root_entry(char *name, char *ext, char attributes,
   p = entry + 8;
   memcpy(p, ext, 3);
 
+  // Attributes
+  p = entry + 11;
+  memcpy(p, &attributes, 1);
+
   // Creation time
   p = entry + 14;
   memcpy(p, write_time, 2);
@@ -294,6 +298,60 @@ uint16_t get_fat_value(int entry_num, Fat12 *fat12) {
   return fat_entry;
 }
 
+void write_fat_entry(Fat12 *fat12, int entry_num, uint16_t value) {
+  unsigned int fat_offset = SECTOR_SIZE;
+  unsigned int entry_offset = (3 * entry_num) / 2;
+  unsigned int offset = fat_offset + entry_offset;
+
+  uint8_t fullbits, halfbits, halfbits_curr;
+
+  printf("\n");
+  printf("entry num: %d - 0x%03x\n", entry_num, entry_num);
+  printf("fat value %d - 0x%03x\n", value, value);
+
+  if (entry_num % 2 == 0) {
+    printf("fullbits: 0x%02x\n", value & 0x0FF);
+    printf("halfbits: 0x%02x\n", value & 0xF00);
+
+    fullbits = value & 0x0FF;
+    halfbits = value >> 8;
+
+    // Write full bits
+    fseek(fat12->fp, offset, SEEK_SET);
+    fwrite(&fullbits, 8, 1, fat12->fp);
+
+    // Write half bits
+    fseek(fat12->fp, offset + 1, SEEK_SET);
+    fread(&halfbits_curr, 8, 1, fat12->fp);
+
+    halfbits |= halfbits_curr;
+    fwrite(&halfbits, 8, 1, fat12->fp);
+  } else {
+    printf("fullbits: 0x%02x\n", value >> 4);
+    printf("halfbits: 0x%02x\n", (value & 0x00F) << 4);
+
+    fullbits = value >> 4;
+    halfbits = (value & 0x00F) << 4;
+
+    // printf("full: 0x%02x\n", fullbits);
+    // printf("half: 0x%02x\n", halfbits);
+
+    // Write full bits
+    fseek(fat12->fp, offset + 1, SEEK_SET);
+    fwrite(&fullbits, 8, 1, fat12->fp);
+
+    // Write half bits
+    fseek(fat12->fp, offset, SEEK_SET);
+    fread(&halfbits_curr, 8, 1, fat12->fp);
+
+    halfbits |= halfbits_curr;
+    fwrite(&halfbits, 8, 1, fat12->fp);
+  }
+
+  printf("full: 0x%02x\n", fullbits);
+  printf("half: 0x%02x\n", halfbits);
+}
+
 int next_cluster(uint16_t *next, int entry_num, Fat12 *fat12) {
   uint16_t fat_value = get_fat_value(entry_num, fat12);
   // printf("next: 0x%x\n", fat_value);
@@ -305,11 +363,12 @@ int next_cluster(uint16_t *next, int entry_num, Fat12 *fat12) {
   return TRUE;
 }
 
-int next_free_cluster(Fat12 *fat12) {
+int next_free_cluster(Fat12 *fat12, int not_index) {
   int i;
+  printf("NOT index: %d\n", not_index);
   for (i = 2; i <= 2846; i += 1) {
-    int fat_value = get_fat_value(i, fat12);
-    if (fat_value == 0x00) {
+    uint16_t fat_value = get_fat_value(i, fat12);
+    if (fat_value == 0x0000 && i != not_index) {
       return i;
     }
   }
