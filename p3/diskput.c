@@ -18,9 +18,9 @@ void copy_local_file(Fat12 *fat12, FILE *fp, char *name, char *ext,
   DosDate *date;
   create_time_date_structs(&time, &date);
 
+  // Create and add a new root entry to the disk
   char *root_entry =
       create_root_entry(name, ext, 0x00, time, date, first_logical, filesize);
-
   add_root_entry(root_entry, fat12);
 
   while (bytes_left > 0) {
@@ -70,16 +70,18 @@ int main(int argc, char *argv[]) {
     exit(1);
   }
 
-  printf("%s.%s\n", name, ext);
-
   Fat12 *fat12 = create_fat_struct(disk_filename);
-
   read_disk_info(fat12);
 
   FILE *copy_fp = fopen(local_filename, "r");
-
   if (copy_fp == NULL) {
     printf("File not found.\n");
+    exit(1);
+  }
+
+  DirEntry *found_entry = find_root_entry(copy_filename, fat12);
+  if (found_entry != NULL) {
+    printf("File %s already exists in the root directory\n", copy_filename);
     exit(1);
   }
 

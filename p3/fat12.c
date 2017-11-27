@@ -102,7 +102,14 @@ int get_root_directory_entry(DirEntry **direntry_ptr, int entry_num,
   // extension
   fseek(fat12->fp, entry_offset + 8, SEEK_SET);
   fread(&direntry->ext, 3, 1, fat12->fp);
-  direntry->ext[3] = '\0'; // terminating char
+
+  i = 0;
+  while (i < 3) {
+    if (direntry->ext[i] == ' ')
+      break;
+    i += 1;
+  }
+  direntry->ext[i] = '\0'; // terminating char
 
   // attributes
   fseek(fat12->fp, entry_offset + 11, SEEK_SET);
@@ -347,7 +354,7 @@ void free_space(Fat12 *fat12) {
   int i;
   for (i = 2; i <= 2842; i += 1) {
     int fat_value = get_fat_value(i, fat12);
-    if (fat_value == 0x00) {
+    if (fat_value == 0x000) {
       free_sectors += 1;
     }
   }
