@@ -316,42 +316,58 @@ void write_fat_entry(Fat12 *fat12, int entry_num, uint16_t value) {
     halfbits = value >> 8;
 
     // Write half bits
-    fseek(fat12->fp, offset + 1, SEEK_SET);
-    fread(&halfbits_curr, 8, 1, fat12->fp);
+    // fseek(fat12->fp, offset + 1, SEEK_SET);
+    // fread(&halfbits_curr, 8, 1, fat12->fp);
 
     // printf("half: 0x%02x\n", halfbits);
     // printf("full: 0x%02x\n", fullbits);
 
-    halfbits = (halfbits_curr & 0xF0) & halfbits;
-    fseek(fat12->fp, offset + 1, SEEK_SET);
-    fwrite(&halfbits, 8, 1, fat12->fp);
+    // halfbits = (halfbits_curr & 0xF0) & halfbits;
+    // fseek(fat12->fp, offset + 1, SEEK_SET);
+    // fwrite(&halfbits, 8, 1, fat12->fp);
 
     // printf("half: 0x%02x\n", halfbits);
     // printf("full: 0x%02x\n", fullbits);
 
     // Write full bits
+    // fseek(fat12->fp, offset, SEEK_SET);
+    // fwrite(&fullbits, 8, 1, fat12->fp);
+
+    int val = (value >> 8) & 0x0F;
+    fseek(fat12->fp, offset + 1, SEEK_SET);
+    fwrite(&val, 8, 1, fat12->fp);
+
+    val = value & 0xFF;
     fseek(fat12->fp, offset, SEEK_SET);
-    fwrite(&fullbits, 8, 1, fat12->fp);
+    fwrite(&val, 8, 1, fat12->fp);
   } else {
-    fullbits = value >> 4;
-    halfbits = (value & 0x00F) << 4;
+    // fullbits = value >> 4;
+    // halfbits = (value & 0x00F) << 4;
 
-    printf("half: 0x%02x\n", halfbits);
-    printf("full: 0x%02x\n", fullbits);
+    // printf("half: 0x%02x\n", halfbits);
+    // printf("full: 0x%02x\n", fullbits);
 
-    // Write half bits
+    // // Write half bits
+    // fseek(fat12->fp, offset, SEEK_SET);
+    // fread(&halfbits_curr, 8, 1, fat12->fp);
+
+    // printf("curr: 0x%02x\n", halfbits_curr);
+
+    // // halfbits = (halfbits_curr & 0x0F) & halfbits;
+    // fseek(fat12->fp, offset, SEEK_SET);
+    // fwrite(&halfbits, 8, 1, fat12->fp);
+
+    // // Write full bits
+    // fseek(fat12->fp, offset + 1, SEEK_SET);
+    // fwrite(&fullbits, 8, 1, fat12->fp);
+
+    int val = (value << 4) & 0xF0;
     fseek(fat12->fp, offset, SEEK_SET);
-    fread(&halfbits_curr, 8, 1, fat12->fp);
+    fwrite(&val, 8, 1, fat12->fp);
 
-    printf("curr: 0x%02x\n", halfbits_curr);
-
-    // halfbits = (halfbits_curr & 0x0F) & halfbits;
-    fseek(fat12->fp, offset, SEEK_SET);
-    fwrite(&halfbits, 8, 1, fat12->fp);
-
-    // Write full bits
+    val = (value >> 4) & 0xFF;
     fseek(fat12->fp, offset + 1, SEEK_SET);
-    fwrite(&fullbits, 8, 1, fat12->fp);
+    fwrite(&val, 8, 1, fat12->fp);
   }
 
   printf("half: 0x%02x\n", halfbits);
