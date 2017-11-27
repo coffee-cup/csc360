@@ -110,4 +110,7 @@ int get_physical_sector_number(uint16_t logical_sector_number);
 // Returns a root directory entry for a file matching filename
 DirEntry *find_root_entry(char *search_filename, Fat12 *fat12);
 
+// Copies the contents of FAT1 to FAT2
+void copy_fats(Fat12 *fat12);
+
 #endif

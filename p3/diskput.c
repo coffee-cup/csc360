@@ -95,5 +95,6 @@ int main(int argc, char *argv[]) {
   printf("Successfully copied %s (%d bytes) to %s.\n", local_filename, filesize,
          disk_filename);
 
+  copy_fats(fat12);
   destroy_fat_struct(fat12);
 }

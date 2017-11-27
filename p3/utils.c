@@ -8,18 +8,6 @@ void format_date(char *s, DosDate *date) {
   sprintf(s, "%d-%02d-%02d", date->year + 1980, date->month, date->date);
 }
 
-// struct _DosTime {
-//   unsigned int two_secs : 5;
-//   unsigned int minutes : 6;
-//   unsigned int hours : 5;
-// } __attribute__((packed));
-
-// struct _DosDate {
-//   unsigned int date : 5;
-//   unsigned int month : 4;
-//   unsigned int year : 7;
-// } __attribute__((packed));
-
 void create_time_date_structs(DosTime **time_ptr, DosDate **date_ptr) {
   // Fat12 *fat12 = (Fat12 *)malloc(sizeof(Fat12));
   DosTime *time_struct = (DosTime *)malloc(sizeof(DosTime));

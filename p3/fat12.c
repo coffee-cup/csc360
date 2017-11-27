@@ -352,7 +352,7 @@ void free_space(Fat12 *fat12) {
   int free_sectors = 0;
 
   int i;
-  for (i = 2; i <= 2842; i += 1) {
+  for (i = 2; i <= fat12->total_size / SECTOR_SIZE; i += 1) {
     int fat_value = get_fat_value(i, fat12);
     if (fat_value == 0x000) {
       free_sectors += 1;
@@ -400,4 +400,12 @@ DirEntry *find_root_entry(char *search_filename, Fat12 *fat12) {
   }
 
   return found_entry;
+}
+
+void copy_fats(Fat12 *fat12) {
+  int from_location = SECTOR_SIZE;
+  int to_location = 10 * SECTOR_SIZE;
+  int bytes_to_copy = 9 * SECTOR_SIZE;
+
+  copy_bytes(bytes_to_copy, from_location, to_location, fat12->fp, fat12->fp);
 }
