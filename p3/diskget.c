@@ -4,15 +4,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-// TODO: Update last accessed date
-
 // Copy the directory entry to the file fp
 void copy_found_file(DirEntry *direntry, Fat12 *fat12, FILE *fp,
                      char *search_filename) {
   int count = 0;
   uint16_t next = direntry->first_logical_cluster;
-
-  printf("first sector: %d\n", next);
 
   while (1) {
     int physical_sector = get_physical_sector_number(next);
@@ -31,8 +27,6 @@ void copy_found_file(DirEntry *direntry, Fat12 *fat12, FILE *fp,
     if (!next_cluster(&next, next, fat12)) {
       break;
     }
-
-    // printf("next sector is %d\n", next);
 
     count += 1;
   }

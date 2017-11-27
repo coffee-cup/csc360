@@ -52,7 +52,7 @@ void read_disk_info(Fat12 *fat12) {
     strcpy(boot->volume_label, "NO NAME ");
   }
 
-  // free_space(fat12);
+  free_space(fat12);
   verify_disk(fat12);
 }
 
@@ -210,8 +210,6 @@ char *create_root_entry(char *name, char *ext, char attributes,
   p = entry + 26;
   memcpy(p, &first_logical_cluster, 2);
 
-  printf("FIRST LOGICAL %d\n", first_logical_cluster);
-
   // Filesize
   p = entry + 28;
   memcpy(p, &filesize, 4);
@@ -248,14 +246,6 @@ uint16_t get_fat_value(int entry_num, Fat12 *fat12) {
   uint8_t halfbits;
   uint16_t fat_entry = 0;
 
-  // printf("\n");
-  // printf("sectors per fat: %d\n", fat12->boot->sectors_per_fat);
-  // printf("entry_num: %d - 0x%04x\n", entry_num, entry_num);
-  // printf("fat_offset: %d - 0x%04x\n", fat_offset, fat_offset);
-  // printf("entry_offset: %d - 0x%04x\n", entry_offset, entry_offset);
-  // printf("offset: %d - 0x%04x\n", offset, offset);
-  // printf("\n");
-
   // If n is even, then physical location of the entry
   //    is the low four bits in location 1+(3*n)/2
   //    and the 8 bits in location (3*n)/2
@@ -263,9 +253,6 @@ uint16_t get_fat_value(int entry_num, Fat12 *fat12) {
   //    is the high four bits in location (3*n)/2
   //    and the 8 bits in location 1+(3*n)/2
   if (entry_num % 2 == 0) {
-    // printf("eight bits at 0x%04x\n", offset);
-    // printf("low four bits at 0x%x\n", offset + 1);
-
     fseek(fat12->fp, offset, SEEK_SET);
     fread(&fullbits, 8, 1, fat12->fp);
 
@@ -274,9 +261,6 @@ uint16_t get_fat_value(int entry_num, Fat12 *fat12) {
 
     fat_entry = ((halfbits & 0x0F) << 8) | fullbits;
   } else {
-    // printf("eight bits at 0x%04x\n", offset + 1);
-    // printf("high four bits at 0x%x\n", offset);
-
     fseek(fat12->fp, offset + 1, SEEK_SET);
     fread(&fullbits, 8, 1, fat12->fp);
 
@@ -284,20 +268,9 @@ uint16_t get_fat_value(int entry_num, Fat12 *fat12) {
     fread(&halfbits, 8, 1, fat12->fp);
 
     halfbits = halfbits >> 4;
-
     fat_entry = (fullbits << 4) | halfbits;
   }
 
-  // printf("\n--- read\n");
-  // printf("halfbits: 0x%02x\n", halfbits);
-  // printf("fullbits: 0x%02x\n", fullbits);
-
-  // printf("\n");
-  // printf("entry_num: %d\n", entry_num);
-  // printf("fat_entry: 0x%03x (%d)\n", fat_entry, fat_entry);
-  // printf("---\n");
-
-  // printf("FAT VALUE %d - 0x%03x\n", fat_entry, fat_entry);
   return fat_entry;
 }
 
@@ -306,57 +279,22 @@ void write_fat_entry(Fat12 *fat12, int entry_num, uint16_t value) {
   unsigned int entry_offset = (3 * entry_num) / 2;
   unsigned int offset = fat_offset + entry_offset;
 
-  int fullbits, halfbits, halfbits_curr;
-
-  // printf("\n-------\n");
-  printf("entry num: %d\n", entry_num);
-  // printf("fat value 0x%03x\n", value);
-  printf("writing %d 0x%03x\n", value, value);
-
-  int i;
-  // printf("\n--- before\n");
-  // for (i = entry_num - 3; i <= entry_num + 3; i += 1) {
-  //   char *pre = "";
-  //   if (i == entry_num)
-  //     pre = "-> ";
-  //   printf("%s%d | 0x%03x\n", pre, i, get_fat_value(i, fat12));
-  // }
-  // printf("\n");
-
-  uint16_t data;
-  fseek(fat12->fp, offset, SEEK_SET);
-  fread(&data, 16, 1, fat12->fp);
-
-  printf("data already there 0x%04x\n", data);
+  int fullbits, halfbits, halfbits_curr, val;
 
   if (entry_num % 2 == 0) {
     fullbits = value & 0x0FF;
     halfbits = (value & 0xF00) >> 4;
 
-    // Write half bits
+    // Read data in halfbit byte location
     fseek(fat12->fp, offset + 1, SEEK_SET);
     fread(&halfbits_curr, 8, 1, fat12->fp);
 
-    printf("half: 0x%02x\n", halfbits);
-    printf("full: 0x%02x\n", fullbits);
-
-    // halfbits = (halfbits_curr & 0xF0) & halfbits;
-    // fseek(fat12->fp, offset + 1, SEEK_SET);
-    // fwrite(&halfbits, 8, 1, fat12->fp);
-
-    // printf("half: 0x%02x\n", halfbits);
-    // printf("full: 0x%02x\n", fullbits);
-
     // Write full bits
-    // fseek(fat12->fp, offset, SEEK_SET);
-    // fwrite(&fullbits, 8, 1, fat12->fp);
-
-    int val;
-
     val = value & 0xFF;
     fseek(fat12->fp, offset, SEEK_SET);
     fwrite(&val, 8, 1, fat12->fp);
 
+    // Write halfbits
     val = ((value >> 8) & 0x0F) | halfbits_curr;
     fseek(fat12->fp, offset + 1, SEEK_SET);
     fwrite(&val, 8, 1, fat12->fp);
@@ -364,55 +302,24 @@ void write_fat_entry(Fat12 *fat12, int entry_num, uint16_t value) {
     fullbits = value >> 4;
     halfbits = (value & 0x00F) << 4;
 
-    // data = (data & 0x0F00) | (value >> 4) | ((value & 0x00F) << 12);
-    // printf("value: 0x%03x data: 0x%04x\n", value, data);
-
-    // fseek(fat12->fp, offset, SEEK_SET);
-    // fwrite(&data, 16, 1, fat12->fp);
-
-    // printf("half: 0x%02x\n", halfbits);
-    // printf("full: 0x%02x\n", fullbits);
-
-    // // Write half bits
+    // Read data in halfbit byte location
     fseek(fat12->fp, offset, SEEK_SET);
     fread(&halfbits_curr, 8, 1, fat12->fp);
 
-    // printf("curr: 0x%02x\n", halfbits_curr);
-
-    // // halfbits = (halfbits_curr & 0x0F) & halfbits;
-    // fseek(fat12->fp, offset, SEEK_SET);
-    // fwrite(&halfbits, 8, 1, fat12->fp);
-
-    // // Write full bits
-    // fseek(fat12->fp, offset + 1, SEEK_SET);
-    // fwrite(&fullbits, 8, 1, fat12->fp);
-
-    int val = ((value << 4) & 0xF0) | halfbits_curr;
+    // Write halfbits
+    val = ((value << 4) & 0xF0) | halfbits_curr;
     fseek(fat12->fp, offset, SEEK_SET);
     fwrite(&val, 8, 1, fat12->fp);
 
+    // Write full bits
     val = (value >> 4) & 0xFF;
     fseek(fat12->fp, offset + 1, SEEK_SET);
     fwrite(&val, 8, 1, fat12->fp);
   }
-
-  // printf("\n--- after\n");
-  // for (i = entry_num - 5; i <= entry_num + 3; i += 1) {
-  //   char *pre = "";
-  //   if (i == entry_num)
-  //     pre = "-> ";
-  //   printf("%s%d | 0x%03x\n", pre, i, get_fat_value(i, fat12));
-  // }
-  // printf("\n");
-
-  // printf("half: 0x%02x\n", halfbits);
-  // printf("full: 0x%02x\n", fullbits);
-  // printf("reading: 0x%03x\n", get_fat_value(entry_num, fat12));
 }
 
 int next_cluster(uint16_t *next, int entry_num, Fat12 *fat12) {
   uint16_t fat_value = get_fat_value(entry_num, fat12);
-  // printf("next: 0x%x\n", fat_value);
   if (fat_value >= 0xFF0) {
     return FALSE;
   }
@@ -425,9 +332,7 @@ int next_free_cluster(Fat12 *fat12, int not_index) {
   int i;
   for (i = 2; i <= 2846; i += 1) {
     uint16_t fat_value = get_fat_value(i, fat12);
-    // printf("%d: 0x%x\n", i, fat_value);
     if (fat_value == 0x000 && i != not_index) {
-      // printf("found %d which is not %d\n", i, not_index);
       return i;
     }
   }
@@ -436,7 +341,6 @@ int next_free_cluster(Fat12 *fat12, int not_index) {
 
 // correct first
 // 1389568 bytes = 2714 sectors
-//
 void free_space(Fat12 *fat12) {
   int free_sectors = 0;
 
@@ -448,7 +352,6 @@ void free_space(Fat12 *fat12) {
     }
   }
 
-  // fat12->free_size = free_sectors;
   fat12->free_size = free_sectors * SECTOR_SIZE;
 }
 
