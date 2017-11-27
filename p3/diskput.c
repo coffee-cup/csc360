@@ -15,7 +15,7 @@ void copy_local_file(Fat12 *fat12, FILE *fp, char *name, char *ext,
 
   int bytes_left = filesize;
 
-  printf("NEXT FREE %d\n", current_fat_index);
+  printf("first logical %d\n", current_fat_index);
 
   DosTime *time;
   DosDate *date;
@@ -27,6 +27,8 @@ void copy_local_file(Fat12 *fat12, FILE *fp, char *name, char *ext,
   add_root_entry(fat12, root_entry);
 
   while (bytes_left > 0) {
+    printf("\n---\n");
+
     int bytes_to_copy = bytes_left;
     if (bytes_to_copy > SECTOR_SIZE) {
       bytes_to_copy = SECTOR_SIZE;
@@ -45,6 +47,7 @@ void copy_local_file(Fat12 *fat12, FILE *fp, char *name, char *ext,
     }
 
     next_free = next_free_cluster(fat12, current_fat_index);
+    // printf("next free 0x%x (%d)\n", next_free, next_free);
 
     bytes_left -= bytes_to_copy;
     if (bytes_left <= 0) {
@@ -52,12 +55,22 @@ void copy_local_file(Fat12 *fat12, FILE *fp, char *name, char *ext,
     } else {
       fat_value = next_free;
     }
+
+    printf("%d points to %d\n", current_fat_index, next_free);
     write_fat_entry(fat12, current_fat_index, fat_value);
+
+    printf("\n");
+
+    int i;
+    for (i = 0; i < 5; i += 1) {
+      uint16_t curr_value = get_fat_value(current_fat_index + i, fat12);
+      printf("%d: 0x%03x\n", current_fat_index + i, curr_value);
+    }
 
     current_fat_index = next_free;
 
     count += 1;
-    // if (count == 2) {
+    // if (count == 5) {
     //   break;
     // }
   }
@@ -106,7 +119,11 @@ int main(int argc, char *argv[]) {
     exit(1);
   }
 
+  printf("%d, 0x%03x\n", 139, get_fat_value(139, fat12));
+
   copy_local_file(fat12, copy_fp, name, ext, filesize);
+  printf("Successfully copied %s (%d bytes) to %s.\n", local_filename, filesize,
+         disk_filename);
 
   destroy_fat_struct(fat12);
 }

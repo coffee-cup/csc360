@@ -244,7 +244,7 @@ uint16_t get_fat_value(int entry_num, Fat12 *fat12) {
 
   uint8_t fullbits;
   uint8_t halfbits;
-  unsigned int fat_entry = 0;
+  uint16_t fat_entry = 0;
 
   // printf("\n");
   // printf("sectors per fat: %d\n", fat12->boot->sectors_per_fat);
@@ -270,7 +270,7 @@ uint16_t get_fat_value(int entry_num, Fat12 *fat12) {
     fseek(fat12->fp, offset + 1, SEEK_SET);
     fread(&halfbits, 8, 1, fat12->fp);
 
-    fat_entry = (halfbits << 12) | fullbits;
+    fat_entry = ((halfbits & 0x0F) << 8) | fullbits;
   } else {
     // printf("eight bits at 0x%04x\n", offset + 1);
     // printf("high four bits at 0x%x\n", offset);
@@ -286,13 +286,14 @@ uint16_t get_fat_value(int entry_num, Fat12 *fat12) {
     fat_entry = (fullbits << 4) | halfbits;
   }
 
-  // printf("\n");
+  // printf("\n--- read\n");
   // printf("halfbits: 0x%02x\n", halfbits);
   // printf("fullbits: 0x%02x\n", fullbits);
 
-  // printf("\n");
+  // // printf("\n");
   // printf("entry_num: %d\n", entry_num);
-  // printf("fat_entry: %d\n", fat_entry);
+  // printf("fat_entry: 0x%03x (%d)\n", fat_entry, fat_entry);
+  // printf("---\n");
 
   // printf("FAT VALUE %d - 0x%03x\n", fat_entry, fat_entry);
   return fat_entry;
@@ -305,51 +306,57 @@ void write_fat_entry(Fat12 *fat12, int entry_num, uint16_t value) {
 
   uint8_t fullbits, halfbits, halfbits_curr;
 
-  printf("\n");
-  printf("entry num: %d - 0x%03x\n", entry_num, entry_num);
-  printf("fat value %d - 0x%03x\n", value, value);
+  // printf("\n-------\n");
+  printf("entry num: %d\n", entry_num);
+  // printf("fat value 0x%03x\n", value);
+  printf("writing %d 0x%03x\n", value, value);
 
   if (entry_num % 2 == 0) {
-    printf("fullbits: 0x%02x\n", value & 0x0FF);
-    printf("halfbits: 0x%02x\n", value & 0xF00);
-
     fullbits = value & 0x0FF;
     halfbits = value >> 8;
 
-    // Write full bits
-    fseek(fat12->fp, offset, SEEK_SET);
-    fwrite(&fullbits, 8, 1, fat12->fp);
-
     // Write half bits
     fseek(fat12->fp, offset + 1, SEEK_SET);
     fread(&halfbits_curr, 8, 1, fat12->fp);
 
-    halfbits |= halfbits_curr;
-    fwrite(&halfbits, 8, 1, fat12->fp);
-  } else {
-    printf("fullbits: 0x%02x\n", value >> 4);
-    printf("halfbits: 0x%02x\n", (value & 0x00F) << 4);
+    // printf("half: 0x%02x\n", halfbits);
+    // printf("full: 0x%02x\n", fullbits);
 
+    halfbits = (halfbits_curr & 0xF0) & halfbits;
+    fseek(fat12->fp, offset + 1, SEEK_SET);
+    fwrite(&halfbits, 8, 1, fat12->fp);
+
+    // printf("half: 0x%02x\n", halfbits);
+    // printf("full: 0x%02x\n", fullbits);
+
+    // Write full bits
+    fseek(fat12->fp, offset, SEEK_SET);
+    fwrite(&fullbits, 8, 1, fat12->fp);
+  } else {
     fullbits = value >> 4;
     halfbits = (value & 0x00F) << 4;
 
-    // printf("full: 0x%02x\n", fullbits);
-    // printf("half: 0x%02x\n", halfbits);
-
-    // Write full bits
-    fseek(fat12->fp, offset + 1, SEEK_SET);
-    fwrite(&fullbits, 8, 1, fat12->fp);
+    printf("half: 0x%02x\n", halfbits);
+    printf("full: 0x%02x\n", fullbits);
 
     // Write half bits
     fseek(fat12->fp, offset, SEEK_SET);
     fread(&halfbits_curr, 8, 1, fat12->fp);
 
-    halfbits |= halfbits_curr;
+    printf("curr: 0x%02x\n", halfbits_curr);
+
+    // halfbits = (halfbits_curr & 0x0F) & halfbits;
+    fseek(fat12->fp, offset, SEEK_SET);
     fwrite(&halfbits, 8, 1, fat12->fp);
+
+    // Write full bits
+    fseek(fat12->fp, offset + 1, SEEK_SET);
+    fwrite(&fullbits, 8, 1, fat12->fp);
   }
 
-  printf("full: 0x%02x\n", fullbits);
   printf("half: 0x%02x\n", halfbits);
+  printf("full: 0x%02x\n", fullbits);
+  printf("reading: 0x%03x\n", get_fat_value(entry_num, fat12));
 }
 
 int next_cluster(uint16_t *next, int entry_num, Fat12 *fat12) {
@@ -365,10 +372,11 @@ int next_cluster(uint16_t *next, int entry_num, Fat12 *fat12) {
 
 int next_free_cluster(Fat12 *fat12, int not_index) {
   int i;
-  printf("NOT index: %d\n", not_index);
   for (i = 2; i <= 2846; i += 1) {
     uint16_t fat_value = get_fat_value(i, fat12);
-    if (fat_value == 0x0000 && i != not_index) {
+    // printf("%d: 0x%x\n", i, fat_value);
+    if (fat_value == 0x000 && i != not_index) {
+      // printf("found %d which is not %d\n", i, not_index);
       return i;
     }
   }
