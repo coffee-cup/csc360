@@ -11,7 +11,11 @@ void print_dir_entry(DirEntry *direntry) {
 
   // filename
   char filename[12 + 1];
-  sprintf(filename, "%s.%s", direntry->name, direntry->ext);
+  char *sep = ".";
+  if (strcmp(direntry->ext, "") == 0) {
+    sep = "";
+  }
+  sprintf(filename, "%s%s%s", direntry->name, sep, direntry->ext);
 
   // formatted date
   char date_s[13];

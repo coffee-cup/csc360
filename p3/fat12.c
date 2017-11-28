@@ -102,7 +102,6 @@ int get_root_directory_entry(DirEntry **direntry_ptr, int entry_num,
   // extension
   fseek(fat12->fp, entry_offset + 8, SEEK_SET);
   fread(&direntry->ext, 3, 1, fat12->fp);
-
   i = 0;
   while (i < 3) {
     if (direntry->ext[i] == ' ')
@@ -159,6 +158,7 @@ int get_root_directory_entry(DirEntry **direntry_ptr, int entry_num,
     return 0;
   }
 
+  // There are no more root entries
   if ((uint8_t)direntry->name[0] == 0x00) {
     *direntry_ptr = NULL;
     return -1;
@@ -173,6 +173,7 @@ char *create_root_entry(char *name, char *ext, char attributes,
                         DosTime *write_time, DosDate *write_date,
                         uint16_t first_logical_cluster, uint32_t filesize) {
 
+  // Entry is 32 bytes
   char *entry = (char *)malloc(32 * sizeof(char));
   char *p = entry;
 
@@ -261,18 +262,18 @@ uint16_t get_fat_value(int entry_num, Fat12 *fat12) {
   //    and the 8 bits in location 1+(3*n)/2
   if (entry_num % 2 == 0) {
     fseek(fat12->fp, offset, SEEK_SET);
-    fread(&fullbits, 8, 1, fat12->fp);
+    fread(&fullbits, 1, 1, fat12->fp);
 
     fseek(fat12->fp, offset + 1, SEEK_SET);
-    fread(&halfbits, 8, 1, fat12->fp);
+    fread(&halfbits, 1, 1, fat12->fp);
 
     fat_entry = ((halfbits & 0x0F) << 8) | fullbits;
   } else {
     fseek(fat12->fp, offset + 1, SEEK_SET);
-    fread(&fullbits, 8, 1, fat12->fp);
+    fread(&fullbits, 1, 1, fat12->fp);
 
     fseek(fat12->fp, offset, SEEK_SET);
-    fread(&halfbits, 8, 1, fat12->fp);
+    fread(&halfbits, 1, 1, fat12->fp);
 
     halfbits = halfbits >> 4;
     fat_entry = (fullbits << 4) | halfbits;
@@ -286,7 +287,7 @@ void write_fat_entry(int entry_num, uint16_t value, Fat12 *fat12) {
   unsigned int entry_offset = (3 * entry_num) / 2;
   unsigned int offset = fat_offset + entry_offset;
 
-  int fullbits, halfbits, halfbits_curr, val;
+  unsigned int fullbits, halfbits, halfbits_curr, val;
 
   if (entry_num % 2 == 0) {
     fullbits = value & 0x0FF;
@@ -294,34 +295,34 @@ void write_fat_entry(int entry_num, uint16_t value, Fat12 *fat12) {
 
     // Read data in halfbit byte location
     fseek(fat12->fp, offset + 1, SEEK_SET);
-    fread(&halfbits_curr, 8, 1, fat12->fp);
+    fread(&halfbits_curr, 1, 1, fat12->fp);
 
     // Write full bits
     val = value & 0xFF;
     fseek(fat12->fp, offset, SEEK_SET);
-    fwrite(&val, 8, 1, fat12->fp);
+    fwrite(&val, 1, 1, fat12->fp);
 
     // Write halfbits
     val = ((value >> 8) & 0x0F) | halfbits_curr;
     fseek(fat12->fp, offset + 1, SEEK_SET);
-    fwrite(&val, 8, 1, fat12->fp);
+    fwrite(&val, 1, 1, fat12->fp);
   } else {
     fullbits = value >> 4;
     halfbits = (value & 0x00F) << 4;
 
     // Read data in halfbit byte location
     fseek(fat12->fp, offset, SEEK_SET);
-    fread(&halfbits_curr, 8, 1, fat12->fp);
+    fread(&halfbits_curr, 1, 1, fat12->fp);
 
     // Write halfbits
     val = ((value << 4) & 0xF0) | halfbits_curr;
     fseek(fat12->fp, offset, SEEK_SET);
-    fwrite(&val, 8, 1, fat12->fp);
+    fwrite(&val, 1, 1, fat12->fp);
 
     // Write full bits
     val = (value >> 4) & 0xFF;
     fseek(fat12->fp, offset + 1, SEEK_SET);
-    fwrite(&val, 8, 1, fat12->fp);
+    fwrite(&val, 1, 1, fat12->fp);
   }
 }
 
@@ -337,7 +338,7 @@ int next_cluster(uint16_t *next, int entry_num, Fat12 *fat12) {
 
 int next_free_cluster(int not_index, Fat12 *fat12) {
   int i;
-  for (i = 2; i <= 2846; i += 1) {
+  for (i = 2; i <= NUM_DATA_SECTORS; i += 1) {
     uint16_t fat_value = get_fat_value(i, fat12);
     if (fat_value == 0x000 && i != not_index) {
       return i;
@@ -346,13 +347,11 @@ int next_free_cluster(int not_index, Fat12 *fat12) {
   return -1;
 }
 
-// correct first
-// 1389568 bytes = 2714 sectors
 void free_space(Fat12 *fat12) {
   int free_sectors = 0;
 
   int i;
-  for (i = 2; i <= fat12->total_size / SECTOR_SIZE; i += 1) {
+  for (i = 2; i <= NUM_DATA_SECTORS; i += 1) {
     int fat_value = get_fat_value(i, fat12);
     if (fat_value == 0x000) {
       free_sectors += 1;
@@ -388,7 +387,12 @@ DirEntry *find_root_entry(char *search_filename, Fat12 *fat12) {
 
     if (direntry != NULL) {
       char filename[12 + 1];
-      sprintf(filename, "%s.%s", direntry->name, direntry->ext);
+      char *sep = ".";
+      if (strcmp(direntry->ext, "") == 0) {
+        sep = "";
+      }
+
+      sprintf(filename, "%s%s%s", direntry->name, sep, direntry->ext);
 
       if (strcmp(filename, search_filename) == 0) {
         found_entry = direntry;

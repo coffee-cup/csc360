@@ -75,6 +75,7 @@ $RECYCLE.BIN/
 
 # Custom
 
+*.tar.gz
 ICEBERGS.TEX
 REMINDER.txt
 ANS1.PDF

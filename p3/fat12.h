@@ -8,6 +8,7 @@
 #include <string.h>
 
 #define SECTOR_SIZE (512) // bytes
+#define NUM_DATA_SECTORS (2848)
 
 // Attribute Defines
 #define READ_ONLY (0x01)
@@ -108,6 +109,7 @@ void verify_disk(Fat12 *fat12);
 int get_physical_sector_number(uint16_t logical_sector_number);
 
 // Returns a root directory entry for a file matching filename
+// NULL if nothing found
 DirEntry *find_root_entry(char *search_filename, Fat12 *fat12);
 
 // Copies the contents of FAT1 to FAT2
